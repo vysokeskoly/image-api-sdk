@@ -16,7 +16,7 @@ class Result
     /** @var int */
     private $height;
 
-    /** @var ?Coordination */
+    /** @var Coordination|null */
     private $coordination = null;
 
     public function __construct(string $url, string $hash, int $width, int $height)
@@ -52,5 +52,18 @@ class Result
         $this->coordination = $coordination;
 
         return $this;
+    }
+
+    public function toArray(): array
+    {
+        return array_merge(
+            [
+                'url' => $this->getUrl(),
+                'hash' => $this->getHash(),
+                'width' => $this->getWidth(),
+                'height' => $this->getHash(),
+            ],
+            $this->coordination ? $this->coordination->toArray() : []
+        );
     }
 }
