@@ -1,6 +1,8 @@
 VysokeSkoly / ImageApiSdk
 =========================
 
+[![Build Status](https://travis-ci.org/vysokeskoly/image-api-sdk.svg?branch=master)](https://travis-ci.org/vysokeskoly/image-api-sdk)
+
 Sdk for ImageApi
 
 ## Installation
