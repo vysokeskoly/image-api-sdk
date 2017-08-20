@@ -16,6 +16,9 @@ class Result
     /** @var int */
     private $height;
 
+    /** @var ?Coordination */
+    private $coordination = null;
+
     public function __construct(string $url, string $hash, int $width, int $height)
     {
         $this->url = $url;
@@ -44,4 +47,10 @@ class Result
         return $this->height;
     }
 
+    public function setCoordination(Coordination $coordination): self
+    {
+        $this->coordination = $coordination;
+
+        return $this;
+    }
 }
