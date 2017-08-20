@@ -26,19 +26,11 @@ class ImageValidator
         $this->maxImageSize = $maxImageSize;
     }
 
-    public function assertValidImage(string $imagePath, int $minWidth, int $minHeight)
+    public function assertValidImage(string $imagePath, int $minWidth, int $minHeight): void
     {
         try {
-            Assertion::file($imagePath);
-            $imageInfo = getimagesize($imagePath);
-
-            if (!is_array($imageInfo)) {
-                throw UnableToLoadImageException::create();
-            }
-
-            if (!in_array($imageInfo['mime'], $this->allowedMimeTypes)) {
-                throw InvalidMimeTypeException::create($imageInfo['mime'], $this->allowedMimeTypes);
-            }
+            $imageInfo = $this->parseImageInfo($imagePath);
+            $this->assertMimeType($imageInfo);
 
             if (!$this->isFileSizeCorrect($imagePath)) {
                 throw TooBigImageFileSize::create($this->getHumanReadableMaxSize());
@@ -51,6 +43,25 @@ class ImageValidator
             throw $e;
         } catch (\Exception $e) {
             throw ImageException::of($e);
+        }
+    }
+
+    private function parseImageInfo(string $imagePath): array
+    {
+        Assertion::file($imagePath);
+        $imageInfo = getimagesize($imagePath);
+
+        if (!is_array($imageInfo)) {
+            throw UnableToLoadImageException::create();
+        }
+
+        return $imageInfo;
+    }
+
+    private function assertMimeType(array $imageInfo): void
+    {
+        if (!in_array($imageInfo['mime'], $this->allowedMimeTypes)) {
+            throw InvalidMimeTypeException::create($imageInfo['mime'], $this->allowedMimeTypes);
         }
     }
 
@@ -82,5 +93,13 @@ class ImageValidator
     private function getHumanReadableMaxSize(): int
     {
         return (int) round($this->maxImageSize / (1024 * 1024), 0);
+    }
+
+    public function assertImageMimeType(string $uploadedFile): array
+    {
+        $imageInfo = $this->parseImageInfo($uploadedFile);
+        $this->assertMimeType($imageInfo);
+
+        return $imageInfo;
     }
 }

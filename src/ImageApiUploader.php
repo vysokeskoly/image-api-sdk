@@ -38,10 +38,7 @@ class ImageApiUploader implements ImageUploaderInterface
         $imageValidator = new ImageValidator($this->allowedMimeTypes, $this->maxImageSize);
         $imageValidator->assertValidImage($uploadedFile, $minWidth, $minHeight);
 
-        $imageData = file_get_contents($uploadedFile, false);
-        if (!$imageData) {
-            UnableToLoadImageContentException::create();
-        }
+        $imageData = $this->loadImageContent($uploadedFile);
 
         $image = $this->resizeImage($imageData, $minWidth, $minHeight);
         if (!$image) {
@@ -55,6 +52,16 @@ class ImageApiUploader implements ImageUploaderInterface
             : $savedImage;
     }
 
+    private function loadImageContent(string $uploadedFile): string
+    {
+        $imageData = file_get_contents($uploadedFile, false);
+        if (!$imageData) {
+            UnableToLoadImageContentException::create();
+        }
+
+        return $imageData;
+    }
+
     private function resizeImage(string $imageData, int $minWidth, int $minHeight): \Gmagick
     {
         try {
@@ -64,7 +71,13 @@ class ImageApiUploader implements ImageUploaderInterface
         }
     }
 
-    private function save(\Gmagick $image): Result
+    /**
+     * @param \Gmagick|string $image
+     * @param int|null $width
+     * @param int|null $height
+     * @return Result
+     */
+    private function save($image, ?int $width = null, ?int $height = null): Result
     {
         throw new \Exception(sprintf('Method %s is not implemented yet.', __METHOD__));
     }
@@ -95,6 +108,11 @@ class ImageApiUploader implements ImageUploaderInterface
      */
     public function upload(string $uploadedFile): Result
     {
-        throw new \Exception(sprintf('Method %s is not implemented yet.', __METHOD__));
+        $imageValidator = new ImageValidator($this->allowedMimeTypes, $this->maxImageSize);
+        list($width, $height) = $imageValidator->assertImageMimeType($uploadedFile);
+
+        $imageData = $this->loadImageContent($uploadedFile);
+
+        return $this->save($imageData, $width, $height);
     }
 }
