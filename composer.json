@@ -11,12 +11,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "VysokeSkoly\\ImageApiSdk\\": "src/"
+            "VysokeSkoly\\ImageApi\\Sdk\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VysokeSkoly\\ImageApiSdk\\Tests\\": "tests/"
+            "VysokeSkoly\\ImageApi\\Sdk\\Tests\\": "tests/"
         }
     },
     "require": {
