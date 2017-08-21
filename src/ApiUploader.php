@@ -24,7 +24,7 @@ class ApiUploader
 
     public function saveString($content, string $fileName): void
     {
-        $this->postImage('/save', $content, $fileName);
+        $this->postImage('/image', $content, $fileName);
     }
 
     private function postImage(string $endpoint, $content, string $fileName): void

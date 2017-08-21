@@ -26,13 +26,14 @@ class ImageApiUploader implements ImageUploaderInterface
 
     public function __construct(
         array $allowedMimeTypes,
+        int $imageMaxFileSize,
         int $imageMaxSize,
         string $imageUrl,
         string $apiUrl,
         string $apiKey
     ) {
         $this->imageMaxSize = $imageMaxSize;
-        $this->imageValidator = new ImageValidator($allowedMimeTypes, $this->imageMaxSize);
+        $this->imageValidator = new ImageValidator($allowedMimeTypes, $imageMaxFileSize);
         $this->apiUploader = new ApiUploader(new Client(), $apiUrl, $apiKey);
         $this->imageFactory = new ImageFactory();
         $this->imageUrl = $imageUrl;

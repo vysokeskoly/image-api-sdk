@@ -18,12 +18,12 @@ class ImageValidator
     private $allowedMimeTypes;
 
     /** @var int */
-    private $maxImageSize;
+    private $maxImageFileSize;
 
-    public function __construct(array $allowedMimeTypes, int $maxImageSize)
+    public function __construct(array $allowedMimeTypes, int $maxImageFileSize)
     {
         $this->allowedMimeTypes = $allowedMimeTypes;
-        $this->maxImageSize = $maxImageSize;
+        $this->maxImageFileSize = $maxImageFileSize;
     }
 
     public function assertValidImage(string $imagePath, int $minWidth, int $minHeight): void
@@ -68,7 +68,7 @@ class ImageValidator
     private function isFileSizeCorrect(string $image): bool
     {
         if (mb_strpos($image, '/tmp') !== false || mb_strpos($image, '/srv') !== false) {
-            return (filesize($image) <= $this->maxImageSize);
+            return (filesize($image) <= $this->maxImageFileSize);
         }
 
         if ($fp = fopen($image, 'r')) {
@@ -76,7 +76,7 @@ class ImageValidator
             $contentLength = $this->parseContentLength($metaData);
             fclose($fp);
 
-            return $contentLength <= $this->maxImageSize;
+            return $contentLength <= $this->maxImageFileSize;
         }
 
         return false;
@@ -92,7 +92,7 @@ class ImageValidator
 
     private function getHumanReadableMaxSize(): int
     {
-        return (int) round($this->maxImageSize / (1024 * 1024), 0);
+        return (int) round($this->maxImageFileSize / (1024 * 1024), 0);
     }
 
     public function assertImageMimeType(string $uploadedFile): array
