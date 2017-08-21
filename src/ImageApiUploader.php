@@ -8,16 +8,20 @@ use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageContentException;
 
 class ImageApiUploader implements ImageUploaderInterface
 {
-    /** @var array */
-    private $allowedMimeTypes;
+    /** @var ImageValidator */
+    private $imageValidator;
 
-    /** @var int */
-    private $maxImageSize;
+    /** @var ApiUploader */
+    private $apiUploader;
 
-    public function __construct(array $allowedMimeTypes, int $maxImageSize)
+    /** @var string */
+    private $url;
+
+    public function __construct(array $allowedMimeTypes, int $maxImageSize, string $url)
     {
-        $this->allowedMimeTypes = $allowedMimeTypes;
-        $this->maxImageSize = $maxImageSize;
+        $this->imageValidator = new ImageValidator($allowedMimeTypes, $maxImageSize);
+        $this->apiUploader = new ApiUploader();
+        $this->url = $url;
     }
 
     /**
@@ -35,8 +39,7 @@ class ImageApiUploader implements ImageUploaderInterface
         int $minHeight,
         float $aspectRatio = null
     ): Result {
-        $imageValidator = new ImageValidator($this->allowedMimeTypes, $this->maxImageSize);
-        $imageValidator->assertValidImage($uploadedFile, $minWidth, $minHeight);
+        $this->imageValidator->assertValidImage($uploadedFile, $minWidth, $minHeight);
 
         $imageData = $this->loadImageContent($uploadedFile);
 
@@ -45,7 +48,7 @@ class ImageApiUploader implements ImageUploaderInterface
             InvalidImageException::create();
         }
 
-        $savedImage = $this->save($image);
+        $savedImage = $this->save($image, $image->getimagewidth(), $image->getimageheight());
 
         return $aspectRatio !== null
             ? $savedImage->setCoordination($this->calculateCoordination($image, $aspectRatio))
@@ -73,13 +76,16 @@ class ImageApiUploader implements ImageUploaderInterface
 
     /**
      * @param \Gmagick|string $image
-     * @param int|null $width
-     * @param int|null $height
+     * @param int $width
+     * @param int $height
      * @return Result
      */
-    private function save($image, ?int $width = null, ?int $height = null): Result
+    private function save($image, int $width, int $height): Result
     {
-        throw new \Exception(sprintf('Method %s is not implemented yet.', __METHOD__));
+        $imageNameHash = sha1($image);
+        $this->apiUploader->saveString($image, $imageNameHash);
+
+        return new Result($this->url . $imageNameHash . '/', $imageNameHash, $width, $height);
     }
 
     private function calculateCoordination(\Gmagick $image, float $aspectRatio): Coordination
@@ -108,8 +114,7 @@ class ImageApiUploader implements ImageUploaderInterface
      */
     public function upload(string $uploadedFile): Result
     {
-        $imageValidator = new ImageValidator($this->allowedMimeTypes, $this->maxImageSize);
-        list($width, $height) = $imageValidator->assertImageMimeType($uploadedFile);
+        list($width, $height) = $this->imageValidator->assertImageMimeType($uploadedFile);
 
         $imageData = $this->loadImageContent($uploadedFile);
 
