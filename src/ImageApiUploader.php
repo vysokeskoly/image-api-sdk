@@ -2,6 +2,7 @@
 
 namespace VysokeSkoly\ImageApi\Sdk;
 
+use GuzzleHttp\Client;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\InvalidImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageContentException;
@@ -12,7 +13,7 @@ class ImageApiUploader implements ImageUploaderInterface
     private $imageMaxSize;
 
     /** @var string */
-    private $url;
+    private $imageUrl;
 
     /** @var ImageValidator */
     private $imageValidator;
@@ -23,13 +24,18 @@ class ImageApiUploader implements ImageUploaderInterface
     /** @var ImageFactory */
     private $imageFactory;
 
-    public function __construct(array $allowedMimeTypes, int $imageMaxSize, string $url)
-    {
+    public function __construct(
+        array $allowedMimeTypes,
+        int $imageMaxSize,
+        string $imageUrl,
+        string $apiUrl,
+        string $apiKey
+    ) {
         $this->imageMaxSize = $imageMaxSize;
         $this->imageValidator = new ImageValidator($allowedMimeTypes, $this->imageMaxSize);
-        $this->apiUploader = new ApiUploader();
+        $this->apiUploader = new ApiUploader(new Client(), $apiUrl, $apiKey);
         $this->imageFactory = new ImageFactory();
-        $this->url = $url;
+        $this->imageUrl = $imageUrl;
     }
 
     /**
@@ -121,7 +127,7 @@ class ImageApiUploader implements ImageUploaderInterface
         $imageNameHash = sha1($image);
         $this->apiUploader->saveString($image, $imageNameHash);
 
-        return new Result($this->url . $imageNameHash . '/', $imageNameHash, $width, $height);
+        return new Result($this->imageUrl . $imageNameHash . '/', $imageNameHash, $width, $height);
     }
 
     private function calculateCoordination(\Gmagick $image, float $aspectRatio): Coordination
