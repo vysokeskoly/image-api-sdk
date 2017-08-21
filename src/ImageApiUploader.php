@@ -8,19 +8,27 @@ use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageContentException;
 
 class ImageApiUploader implements ImageUploaderInterface
 {
+    /** @var int */
+    private $imageMaxSize;
+
+    /** @var string */
+    private $url;
+
     /** @var ImageValidator */
     private $imageValidator;
 
     /** @var ApiUploader */
     private $apiUploader;
 
-    /** @var string */
-    private $url;
+    /** @var ImageFactory */
+    private $imageFactory;
 
-    public function __construct(array $allowedMimeTypes, int $maxImageSize, string $url)
+    public function __construct(array $allowedMimeTypes, int $imageMaxSize, string $url)
     {
-        $this->imageValidator = new ImageValidator($allowedMimeTypes, $maxImageSize);
+        $this->imageMaxSize = $imageMaxSize;
+        $this->imageValidator = new ImageValidator($allowedMimeTypes, $this->imageMaxSize);
         $this->apiUploader = new ApiUploader();
+        $this->imageFactory = new ImageFactory();
         $this->url = $url;
     }
 
@@ -68,7 +76,35 @@ class ImageApiUploader implements ImageUploaderInterface
     private function resizeImage(string $imageData, int $minWidth, int $minHeight): \Gmagick
     {
         try {
-            throw new \Exception(sprintf('Method %s is not implemented yet.', __METHOD__));
+            $image = $this->imageFactory->createImage($imageData);
+
+            $width = $image->getimagewidth();
+            $height = $image->getimageheight();
+
+            /*
+             * If both dimensions are larger than max size, resize image so to have bigger dimension max size.
+             * Otherwise keep original image.
+             */
+            if ($width > $this->imageMaxSize || $height > $this->imageMaxSize) {
+                if ($width >= $height) {
+                    $image->scaleimage($this->imageMaxSize, 0);
+                } else {
+                    $image->scaleimage(0, $this->imageMaxSize);
+                }
+
+                $width = $image->getimagewidth();
+                $height = $image->getimageheight();
+
+                if ($width < $minWidth || $height < $minHeight) {
+                    if ($width >= $height) {
+                        $image->scaleimage(0, $minHeight);
+                    } else {
+                        $image->scaleimage($minWidth, 0);
+                    }
+                }
+            }
+
+            return $image;
         } catch (\Exception $e) {
             throw ImageException::of($e);
         }
