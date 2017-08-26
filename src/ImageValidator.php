@@ -5,8 +5,8 @@ namespace VysokeSkoly\ImageApi\Sdk;
 use Assert\Assertion;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\InvalidMimeTypeException;
-use VysokeSkoly\ImageApi\Sdk\Exception\TooBigImageFileSize;
-use VysokeSkoly\ImageApi\Sdk\Exception\TooSmallImage;
+use VysokeSkoly\ImageApi\Sdk\Exception\TooBigImageFileSizeException;
+use VysokeSkoly\ImageApi\Sdk\Exception\TooSmallImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageException;
 
 class ImageValidator
@@ -33,16 +33,16 @@ class ImageValidator
             $this->assertMimeType($imageInfo);
 
             if (!$this->isFileSizeCorrect($imagePath)) {
-                throw TooBigImageFileSize::create($this->getHumanReadableMaxSize());
+                throw TooBigImageFileSizeException::create($this->getHumanReadableMaxSize());
             }
 
             if ($imageInfo[self::INDEX_MIN_WIDTH] <= $minWidth || $imageInfo[self::INDEX_MIN_HEIGHT] <= $minHeight) {
-                throw TooSmallImage::create($minHeight, $minWidth);
+                throw TooSmallImageException::create($minHeight, $minWidth);
             }
         } catch (ImageException $e) {
             throw $e;
         } catch (\Exception $e) {
-            throw ImageException::of($e);
+            throw ImageException::from($e);
         }
     }
 

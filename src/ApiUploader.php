@@ -3,6 +3,7 @@
 namespace VysokeSkoly\ImageApi\Sdk;
 
 use GuzzleHttp\Client;
+use VysokeSkoly\ImageApi\Sdk\Exception\UploadException;
 
 class ApiUploader
 {
@@ -35,7 +36,7 @@ class ApiUploader
             [
                 'multipart' => [
                     [
-                        'name' => 'FileContents',
+                        'name' => $fileName,
                         'contents' => $content,
                         'filename' => $fileName,
                     ],
@@ -44,7 +45,7 @@ class ApiUploader
         );
 
         if ($res->getStatusCode() >= 400) {
-            throw new \Exception(sprintf('Method %s is not implemented yet.', __METHOD__));
+            throw UploadException::create($res->getStatusCode(), $res->getBody()->getContents());
         }
     }
 

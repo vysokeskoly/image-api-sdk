@@ -113,7 +113,7 @@ class ImageApiUploader implements ImageUploaderInterface
 
             return $image;
         } catch (\Exception $e) {
-            throw ImageException::of($e);
+            throw ImageException::from($e);
         }
     }
 

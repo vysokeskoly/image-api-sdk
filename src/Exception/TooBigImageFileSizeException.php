@@ -2,7 +2,7 @@
 
 namespace VysokeSkoly\ImageApi\Sdk\Exception;
 
-class TooBigImageFileSize extends ImageException
+class TooBigImageFileSizeException extends ImageException
 {
     public static function create(int $maxFileSize): ImageException
     {

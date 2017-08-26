@@ -4,7 +4,7 @@ namespace VysokeSkoly\ImageApi\Sdk\Exception;
 
 class ImageException extends \InvalidArgumentException
 {
-    public static function of(\Throwable $e): ImageException
+    public static function from(\Throwable $e): ImageException
     {
         return new static($e->getMessage(), $e);
     }

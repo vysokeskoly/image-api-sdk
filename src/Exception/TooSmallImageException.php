@@ -2,7 +2,7 @@
 
 namespace VysokeSkoly\ImageApi\Sdk\Exception;
 
-class TooSmallImage extends ImageException
+class TooSmallImageException extends ImageException
 {
     public static function create(int $minHeight, int $minWidth): ImageException
     {
