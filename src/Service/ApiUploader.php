@@ -2,7 +2,10 @@
 
 namespace VysokeSkoly\ImageApi\Sdk\Service;
 
+use Assert\Assertion;
+use Assert\InvalidArgumentException;
 use GuzzleHttp\Client;
+use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\UploadException;
 
 class ApiUploader
@@ -23,12 +26,19 @@ class ApiUploader
         $this->apiKey = $apiKey;
     }
 
-    public function saveString($content, string $fileName): void
+    public function saveString(string $content, string $fileName): void
     {
-        $this->postImage('/image', $content, $fileName);
+        try {
+            Assertion::notEmpty($content);
+            Assertion::notEmpty($fileName);
+
+            $this->postImage('/image', $content, $fileName);
+        } catch (InvalidArgumentException $e) {
+            throw ImageException::from($e);
+        }
     }
 
-    private function postImage(string $endpoint, $content, string $fileName): void
+    private function postImage(string $endpoint, string $content, string $fileName): void
     {
         $res = $this->client->request(
             'POST',

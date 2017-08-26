@@ -6,8 +6,6 @@ use GuzzleHttp\Client;
 use VysokeSkoly\ImageApi\Sdk\Entity\Coordination;
 use VysokeSkoly\ImageApi\Sdk\Entity\Result;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
-use VysokeSkoly\ImageApi\Sdk\Exception\InvalidImageException;
-use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageContentException;
 use VysokeSkoly\ImageApi\Sdk\Service\ApiUploader;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageValidator;
@@ -21,13 +19,13 @@ class ImageApiUploader implements ImageUploaderInterface
     private $imageUrl;
 
     /** @var ImageValidator */
-    private $imageValidator;
+    protected $imageValidator;
 
     /** @var ApiUploader */
-    private $apiUploader;
+    protected $apiUploader;
 
     /** @var ImageFactory */
-    private $imageFactory;
+    protected $imageFactory;
 
     public function __construct(
         array $allowedMimeTypes,
@@ -45,7 +43,7 @@ class ImageApiUploader implements ImageUploaderInterface
     }
 
     /**
-     * @param string $uploadedFile Full path file name
+     * @param string $imagePath Full path file name
      * @param int $minWidth
      * @param int $minHeight
      * @param float|null $aspectRatio
@@ -54,19 +52,15 @@ class ImageApiUploader implements ImageUploaderInterface
      * @throws ImageException
      */
     public function validateAndUpload(
-        string $uploadedFile,
+        string $imagePath,
         int $minWidth,
         int $minHeight,
         float $aspectRatio = null
     ): Result {
-        $this->imageValidator->assertValidImage($uploadedFile, $minWidth, $minHeight);
+        $this->imageValidator->assertValidImage($imagePath, $minWidth, $minHeight);
 
-        $imageData = $this->loadImageContent($uploadedFile);
-
+        $imageData = $this->loadImageContent($imagePath);
         $image = $this->resizeImage($imageData, $minWidth, $minHeight);
-        if (!$image) {
-            InvalidImageException::create();
-        }
 
         $savedImage = $this->save($image, $image->getimagewidth(), $image->getimageheight());
 
@@ -77,12 +71,7 @@ class ImageApiUploader implements ImageUploaderInterface
 
     private function loadImageContent(string $uploadedFile): string
     {
-        $imageData = file_get_contents($uploadedFile, false);
-        if (!$imageData) {
-            UnableToLoadImageContentException::create();
-        }
-
-        return $imageData;
+        return file_get_contents($uploadedFile, false);
     }
 
     private function resizeImage(string $imageData, int $minWidth, int $minHeight): \Gmagick
@@ -131,7 +120,7 @@ class ImageApiUploader implements ImageUploaderInterface
     private function save($image, int $width, int $height): Result
     {
         $imageNameHash = sha1($image);
-        $this->apiUploader->saveString($image, $imageNameHash);
+        $this->apiUploader->saveString((string) $image, $imageNameHash);
 
         return new Result($this->imageUrl . $imageNameHash . '/', $imageNameHash, $width, $height);
     }
@@ -155,16 +144,16 @@ class ImageApiUploader implements ImageUploaderInterface
     }
 
     /**
-     * @param string $uploadedFile Full path file name
+     * @param string $imagePath Full path file name
      * @return Result
      *
      * @throws ImageException
      */
-    public function upload(string $uploadedFile): Result
+    public function upload(string $imagePath): Result
     {
-        list($width, $height) = $this->imageValidator->assertImageMimeType($uploadedFile);
+        list($width, $height) = $this->imageValidator->assertImageMimeType($imagePath);
 
-        $imageData = $this->loadImageContent($uploadedFile);
+        $imageData = $this->loadImageContent($imagePath);
 
         return $this->save($imageData, $width, $height);
     }

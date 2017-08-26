@@ -8,7 +8,7 @@ use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 interface ImageUploaderInterface
 {
     /**
-     * @param string $uploadedFile Full path file name
+     * @param string $imagePath Full path file name
      * @param int $minWidth
      * @param int $minHeight
      * @param float|null $aspectRatio
@@ -17,17 +17,17 @@ interface ImageUploaderInterface
      * @throws ImageException
      */
     public function validateAndUpload(
-        string $uploadedFile,
+        string $imagePath,
         int $minWidth,
         int $minHeight,
         float $aspectRatio = null
     ): Result;
 
     /**
-     * @param string $uploadedFile Full path file name
+     * @param string $imagePath Full path file name
      * @return Result
      *
      * @throws ImageException
      */
-    public function upload(string $uploadedFile): Result;
+    public function upload(string $imagePath): Result;
 }

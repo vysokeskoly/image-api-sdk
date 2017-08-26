@@ -36,7 +36,7 @@ class ImageValidator
                 throw TooBigImageFileSizeException::create($this->getHumanReadableMaxSize());
             }
 
-            if ($imageInfo[self::INDEX_MIN_WIDTH] <= $minWidth || $imageInfo[self::INDEX_MIN_HEIGHT] <= $minHeight) {
+            if ($imageInfo[self::INDEX_MIN_WIDTH] < $minWidth || $imageInfo[self::INDEX_MIN_HEIGHT] < $minHeight) {
                 throw TooSmallImageException::create($minHeight, $minWidth);
             }
         } catch (ImageException $e) {
@@ -49,7 +49,7 @@ class ImageValidator
     private function parseImageInfo(string $imagePath): array
     {
         Assertion::file($imagePath);
-        $imageInfo = getimagesize($imagePath);
+        $imageInfo = @getimagesize($imagePath);
 
         if (!is_array($imageInfo)) {
             throw UnableToLoadImageException::create();
@@ -87,7 +87,9 @@ class ImageValidator
      */
     private function parseContentLength(array $metaData): int
     {
-        return (int) array_pop(explode(' ', $metaData['wrapper_data'][6]));
+        return array_key_exists('wrapper_data', $metaData)
+            ? (int) array_pop(explode(' ', $metaData['wrapper_data'][6]))
+            : filesize($metaData['uri']);
     }
 
     private function getHumanReadableMaxSize(): int
@@ -95,9 +97,9 @@ class ImageValidator
         return (int) round($this->maxImageFileSize / (1024 * 1024), 0);
     }
 
-    public function assertImageMimeType(string $uploadedFile): array
+    public function assertImageMimeType(string $imagePath): array
     {
-        $imageInfo = $this->parseImageInfo($uploadedFile);
+        $imageInfo = $this->parseImageInfo($imagePath);
         $this->assertMimeType($imageInfo);
 
         return $imageInfo;

@@ -61,7 +61,7 @@ class Result
                 'url' => $this->getUrl(),
                 'hash' => $this->getHash(),
                 'width' => $this->getWidth(),
-                'height' => $this->getHash(),
+                'height' => $this->getHeight(),
             ],
             $this->coordination ? $this->coordination->toArray() : []
         );
