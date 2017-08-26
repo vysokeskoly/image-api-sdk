@@ -16,7 +16,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "VysokeSkoly\\ImageApi\\Sdk\\Tests\\": "tests/"
+            "VysokeSkoly\\Tests\\ImageApi\\Sdk\\": "tests/"
         }
     },
     "require": {
