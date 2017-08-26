@@ -2,6 +2,7 @@ VysokeSkoly / ImageApiSdk
 =========================
 
 [![Build Status](https://travis-ci.org/vysokeskoly/image-api-sdk.svg?branch=master)](https://travis-ci.org/vysokeskoly/image-api-sdk)
+[![Coverage Status](https://coveralls.io/repos/github/vysokeskoly/image-api-sdk/badge.svg?branch=master)](https://coveralls.io/github/vysokeskoly/image-api-sdk?branch=master)
 
 Sdk for ImageApi
 
