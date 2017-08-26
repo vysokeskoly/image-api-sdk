@@ -9,7 +9,7 @@ Sdk for ImageApi
 ## Installation
 ```json
 {
-    "vysokeskoly/image-api-sdk": "dev-master"
+    "vysokeskoly/image-api-sdk": "^1.0"
 }
 ```
 

@@ -3,6 +3,8 @@
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
 
-## 0.0.0 - YYYY-MM-DD
+## 1.0.0 - 2017-08-26
+- Initial implementation
+
 ### Added
 - CHANGELOG.md file
