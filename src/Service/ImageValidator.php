@@ -1,6 +1,6 @@
 <?php
 
-namespace VysokeSkoly\ImageApi\Sdk;
+namespace VysokeSkoly\ImageApi\Sdk\Service;
 
 use Assert\Assertion;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;

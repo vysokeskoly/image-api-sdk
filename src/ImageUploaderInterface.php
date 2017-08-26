@@ -2,6 +2,7 @@
 
 namespace VysokeSkoly\ImageApi\Sdk;
 
+use VysokeSkoly\ImageApi\Sdk\Entity\Result;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 
 interface ImageUploaderInterface

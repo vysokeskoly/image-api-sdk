@@ -3,9 +3,14 @@
 namespace VysokeSkoly\ImageApi\Sdk;
 
 use GuzzleHttp\Client;
+use VysokeSkoly\ImageApi\Sdk\Entity\Coordination;
+use VysokeSkoly\ImageApi\Sdk\Entity\Result;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\InvalidImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageContentException;
+use VysokeSkoly\ImageApi\Sdk\Service\ApiUploader;
+use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
+use VysokeSkoly\ImageApi\Sdk\Service\ImageValidator;
 
 class ImageApiUploader implements ImageUploaderInterface
 {

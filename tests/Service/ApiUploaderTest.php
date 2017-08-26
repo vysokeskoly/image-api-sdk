@@ -1,11 +1,12 @@
 <?php
 
-namespace VysokeSkoly\Tests\ImageApi\Sdk;
+namespace VysokeSkoly\Tests\ImageApi\Sdk\Service;
 
 use GuzzleHttp\Client;
 use Mockery as m;
 use Psr\Http\Message\ResponseInterface;
-use VysokeSkoly\ImageApi\Sdk\ApiUploader;
+use VysokeSkoly\ImageApi\Sdk\Service\ApiUploader;
+use VysokeSkoly\Tests\ImageApi\Sdk\AbstractTestCase;
 
 class ApiUploaderTest extends AbstractTestCase
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace VysokeSkoly\ImageApi\Sdk;
+namespace VysokeSkoly\ImageApi\Sdk\Service;
 
 use GuzzleHttp\Client;
 use VysokeSkoly\ImageApi\Sdk\Exception\UploadException;

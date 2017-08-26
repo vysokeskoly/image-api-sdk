@@ -1,6 +1,6 @@
 <?php
 
-namespace VysokeSkoly\ImageApi\Sdk;
+namespace VysokeSkoly\ImageApi\Sdk\Entity;
 
 class Result
 {
