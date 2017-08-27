@@ -6,7 +6,7 @@ use GuzzleHttp\Client;
 use VysokeSkoly\ImageApi\Sdk\Entity\Coordination;
 use VysokeSkoly\ImageApi\Sdk\Entity\Result;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
-use VysokeSkoly\ImageApi\Sdk\Service\ApiUploader;
+use VysokeSkoly\ImageApi\Sdk\Service\ApiService;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageValidator;
 
@@ -21,8 +21,8 @@ class ImageApiUploader implements ImageUploaderInterface
     /** @var ImageValidator */
     protected $imageValidator;
 
-    /** @var ApiUploader */
-    protected $apiUploader;
+    /** @var ApiService */
+    protected $apiService;
 
     /** @var ImageFactory */
     protected $imageFactory;
@@ -37,7 +37,7 @@ class ImageApiUploader implements ImageUploaderInterface
     ) {
         $this->imageMaxSize = $imageMaxSize;
         $this->imageValidator = new ImageValidator($allowedMimeTypes, $imageMaxFileSize);
-        $this->apiUploader = new ApiUploader(new Client(), $apiUrl, $apiKey);
+        $this->apiService = new ApiService(new Client(), $apiUrl, $apiKey);
         $this->imageFactory = new ImageFactory();
         $this->imageUrl = $imageUrl;
     }
@@ -120,7 +120,7 @@ class ImageApiUploader implements ImageUploaderInterface
     private function save($image, int $width, int $height): Result
     {
         $imageNameHash = sha1($image);
-        $this->apiUploader->saveString((string) $image, $imageNameHash);
+        $this->apiService->saveString((string) $image, $imageNameHash);
 
         return new Result($this->imageUrl . $imageNameHash . '/', $imageNameHash, $width, $height);
     }
@@ -156,5 +156,15 @@ class ImageApiUploader implements ImageUploaderInterface
         $imageData = $this->loadImageContent($imagePath);
 
         return $this->save($imageData, $width, $height);
+    }
+
+    /**
+     * @param string $imageName
+     *
+     * @throws ImageException
+     */
+    public function delete(string $imageName)
+    {
+        $this->apiService->delete($imageName);
     }
 }

@@ -30,4 +30,11 @@ interface ImageUploaderInterface
      * @throws ImageException
      */
     public function upload(string $imagePath): Result;
+
+    /**
+     * @param string $imageName
+     *
+     * @throws ImageException
+     */
+    public function delete(string $imageName);
 }

@@ -3,7 +3,7 @@
 namespace VysokeSkoly\Tests\ImageApi\Sdk\Fixtures;
 
 use VysokeSkoly\ImageApi\Sdk\ImageApiUploader;
-use VysokeSkoly\ImageApi\Sdk\Service\ApiUploader;
+use VysokeSkoly\ImageApi\Sdk\Service\ApiService;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageValidator;
 
@@ -14,9 +14,9 @@ class TestableImageApiUploader extends ImageApiUploader
         $this->imageValidator = $imageValidator;
     }
 
-    public function setApiUploader(ApiUploader $apiUploader)
+    public function setApiService(ApiService $apiService)
     {
-        $this->apiUploader = $apiUploader;
+        $this->apiService = $apiService;
     }
 
     public function setImageFactory(ImageFactory $imageFactory)
