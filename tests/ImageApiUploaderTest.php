@@ -5,7 +5,7 @@ namespace VysokeSkoly\Tests\ImageApi\Sdk;
 use Mockery as m;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageException;
-use VysokeSkoly\ImageApi\Sdk\Service\ApiUploader;
+use VysokeSkoly\ImageApi\Sdk\Service\ApiService;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
 use VysokeSkoly\Tests\ImageApi\Sdk\Fixtures\TestableImageApiUploader;
 
@@ -16,8 +16,8 @@ class ImageApiUploaderTest extends AbstractTestCase
     /** @var TestableImageApiUploader */
     private $imageApiUploader;
 
-    /** @var ApiUploader|m\MockInterface */
-    private $apiUploader;
+    /** @var ApiService|m\MockInterface */
+    private $apiService;
 
     /** @var ImageFactory|m\MockInterface */
     private $imageFactory;
@@ -26,7 +26,7 @@ class ImageApiUploaderTest extends AbstractTestCase
     {
         $this->checkGmagick();
 
-        $this->apiUploader = m::spy(ApiUploader::class);
+        $this->apiService = m::spy(ApiService::class);
         $this->imageFactory = m::mock(ImageFactory::class);
 
         $this->imageApiUploader = new TestableImageApiUploader(
@@ -38,7 +38,7 @@ class ImageApiUploaderTest extends AbstractTestCase
             'apiKey'
         );
 
-        $this->imageApiUploader->setApiUploader($this->apiUploader);
+        $this->imageApiUploader->setApiService($this->apiService);
 
         if (!self::$isGmagickEnabled) {
             $this->imageApiUploader->setImageFactory($this->imageFactory);
@@ -63,7 +63,7 @@ class ImageApiUploaderTest extends AbstractTestCase
 
         $result = $this->imageApiUploader->validateAndUpload($imagePath, $width, $height);
 
-        $this->apiUploader->shouldHaveReceived('saveString')
+        $this->apiService->shouldHaveReceived('saveString')
             ->with($imageData, $expectedHash)
             ->once();
 
@@ -111,7 +111,7 @@ class ImageApiUploaderTest extends AbstractTestCase
 
         $result = $this->imageApiUploader->validateAndUpload($imagePath, $width, $height, $ratio);
 
-        $this->apiUploader->shouldHaveReceived('saveString')
+        $this->apiService->shouldHaveReceived('saveString')
             ->with($imageData, $expectedHash)
             ->once();
 
@@ -136,7 +136,7 @@ class ImageApiUploaderTest extends AbstractTestCase
 
         $result = $this->imageApiUploader->validateAndUpload($imagePath, $width, $height);
 
-        $this->apiUploader->shouldHaveReceived('saveString')
+        $this->apiService->shouldHaveReceived('saveString')
             ->with($imageData, $expectedHash)
             ->once();
 
@@ -160,7 +160,7 @@ class ImageApiUploaderTest extends AbstractTestCase
         $result = $this->imageApiUploader->upload($imagePath);
 
         $this->imageFactory->shouldNotHaveReceived('createImage');
-        $this->apiUploader->shouldHaveReceived('saveString')
+        $this->apiService->shouldHaveReceived('saveString')
             ->with($imageData, $expectedHash)
             ->once();
 
@@ -195,5 +195,18 @@ class ImageApiUploaderTest extends AbstractTestCase
         $imagePath = __DIR__ . '/Fixtures/bruce.jpg';
 
         $this->imageApiUploader->validateAndUpload($imagePath, 100, 100);
+    }
+
+    public function testShouldDeleteImage()
+    {
+        $imageName = 'image-to-delete';
+
+        $this->imageApiUploader->delete($imageName);
+
+        $this->apiService->shouldHaveReceived('delete')
+            ->with($imageName)
+            ->once();
+
+        $this->assertTrue(true);
     }
 }

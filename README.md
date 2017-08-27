@@ -15,6 +15,7 @@ Sdk for ImageApi
 
 ## Requirements
 - `PHP 7.1`
+- Corresponding version of [ImageApi](https://github.com/vysokeskoly/image-api)
 
 ## Usage
 

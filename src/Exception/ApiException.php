@@ -2,7 +2,7 @@
 
 namespace VysokeSkoly\ImageApi\Sdk\Exception;
 
-class UploadException extends ImageException
+class ApiException extends ImageException
 {
     public static function create(int $statusCode, string $contents): ImageException
     {

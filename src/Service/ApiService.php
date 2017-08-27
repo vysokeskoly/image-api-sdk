@@ -5,10 +5,10 @@ namespace VysokeSkoly\ImageApi\Sdk\Service;
 use Assert\Assertion;
 use Assert\InvalidArgumentException;
 use GuzzleHttp\Client;
+use VysokeSkoly\ImageApi\Sdk\Exception\ApiException;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
-use VysokeSkoly\ImageApi\Sdk\Exception\UploadException;
 
-class ApiUploader
+class ApiService
 {
     /** @var Client */
     private $client;
@@ -32,7 +32,7 @@ class ApiUploader
             Assertion::notEmpty($content);
             Assertion::notEmpty($fileName);
 
-            $this->postImage('/image', $content, $fileName);
+            $this->postImage('/image/', $content, $fileName);
         } catch (InvalidArgumentException $e) {
             throw ImageException::from($e);
         }
@@ -55,12 +55,35 @@ class ApiUploader
         );
 
         if ($res->getStatusCode() >= 400) {
-            throw UploadException::create($res->getStatusCode(), $res->getBody()->getContents());
+            throw ApiException::create($res->getStatusCode(), $res->getBody()->getContents());
         }
     }
 
     private function getAuth(): string
     {
         return '?apikey=' . $this->apiKey;
+    }
+
+    public function delete(string $fileName)
+    {
+        try {
+            Assertion::notEmpty($fileName);
+
+            $this->deleteImage('/image/' . $fileName);
+        } catch (InvalidArgumentException $e) {
+            throw ImageException::from($e);
+        }
+    }
+
+    private function deleteImage(string $endpoint): void
+    {
+        $res = $this->client->request(
+            'DELETE',
+            $this->apiUrl . $endpoint . $this->getAuth()
+        );
+
+        if ($res->getStatusCode() >= 400) {
+            throw ApiException::create($res->getStatusCode(), $res->getBody()->getContents());
+        }
     }
 }
