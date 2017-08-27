@@ -185,4 +185,42 @@ class ApiServiceTest extends AbstractTestCase
 
         $this->apiService->delete($fileName);
     }
+
+    public function testShouldListAll()
+    {
+        $entryPoint = '/list/';
+        $expectedList = ['file'];
+        $response = $this->mockResponse(200, json_encode($expectedList));
+        $this->mockClientGetRequest($entryPoint, $response);
+
+        $result = $this->apiService->listAll();
+
+        $this->assertSame($expectedList, $result);
+    }
+
+    private function mockClientGetRequest(string $expectedEntryPoint, ResponseInterface $response)
+    {
+        $apiUrl = self::API_URL . $expectedEntryPoint . '?apikey=' . self::API_KEY;
+        $this->client->shouldReceive('request')
+            ->with('GET', $apiUrl)
+            ->once()
+            ->andReturn($response);
+    }
+
+    /**
+     * @dataProvider errorStatusCodeProvider
+     */
+    public function testShouldThrowApiExceptionOnListAll(int $errorStatusCode)
+    {
+        $entryPoint = '/list/';
+
+        $errorContents = 'errorContents';
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage($errorContents);
+
+        $response = $this->mockResponse($errorStatusCode, $errorContents);
+        $this->mockClientGetRequest($entryPoint, $response);
+
+        $this->apiService->listAll();
+    }
 }

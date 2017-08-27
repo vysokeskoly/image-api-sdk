@@ -36,5 +36,12 @@ interface ImageUploaderInterface
      *
      * @throws ImageException
      */
-    public function delete(string $imageName);
+    public function delete(string $imageName): void;
+
+    /**
+     * @return array
+     *
+     * @throws ImageException
+     */
+    public function listAllImageNames(): array;
 }

@@ -209,4 +209,17 @@ class ImageApiUploaderTest extends AbstractTestCase
 
         $this->assertTrue(true);
     }
+
+    public function testShouldListAll()
+    {
+        $expectedList = ['file'];
+
+        $this->apiService->shouldReceive('listAll')
+            ->once()
+            ->andReturn($expectedList);
+
+        $result = $this->imageApiUploader->listAllImageNames();
+
+        $this->assertSame($expectedList, $result);
+    }
 }

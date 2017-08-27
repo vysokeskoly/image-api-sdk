@@ -86,4 +86,30 @@ class ApiService
             throw ApiException::create($res->getStatusCode(), $res->getBody()->getContents());
         }
     }
+
+    public function listAll(): array
+    {
+        try {
+            return $this->getResultDecoded('/list/');
+        } catch (ApiException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw ApiException::from($e);
+        }
+    }
+
+    private function getResultDecoded(string $endpoint): array
+    {
+        $res = $this->client->request(
+            'GET',
+            $this->apiUrl . $endpoint . $this->getAuth()
+        );
+
+        $contents = $res->getBody()->getContents();
+        if ($res->getStatusCode() >= 400) {
+            throw ApiException::create($res->getStatusCode(), $contents);
+        }
+
+        return json_decode($contents, true);
+    }
 }

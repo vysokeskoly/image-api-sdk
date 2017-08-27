@@ -163,8 +163,18 @@ class ImageApiUploader implements ImageUploaderInterface
      *
      * @throws ImageException
      */
-    public function delete(string $imageName)
+    public function delete(string $imageName): void
     {
         $this->apiService->delete($imageName);
+    }
+
+    /**
+     * @return array
+     *
+     * @throws ImageException
+     */
+    public function listAllImageNames(): array
+    {
+        return $this->apiService->listAll();
     }
 }
