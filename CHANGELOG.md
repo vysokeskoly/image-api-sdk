@@ -2,6 +2,8 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+
+## 1.2.0 - 2017-08-27
 - List all added
 
 ## 1.1.0 - 2017-08-27
