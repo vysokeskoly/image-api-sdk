@@ -44,4 +44,12 @@ interface ImageUploaderInterface
      * @throws ImageException
      */
     public function listAllImageNames(): array;
+
+    /**
+     * @param string $fileName
+     * @return string
+     *
+     * @throws ImageException
+     */
+    public function get(string $fileName): string;
 }

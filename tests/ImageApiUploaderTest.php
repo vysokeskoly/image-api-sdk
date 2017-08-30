@@ -222,4 +222,19 @@ class ImageApiUploaderTest extends AbstractTestCase
 
         $this->assertSame($expectedList, $result);
     }
+
+    public function testShouldGetImage()
+    {
+        $imageName = 'image';
+        $expectedContent = 'content';
+
+        $this->apiService->shouldReceive('get')
+            ->with($imageName)
+            ->once()
+            ->andReturn($expectedContent);
+
+        $result = $this->imageApiUploader->get($imageName);
+
+        $this->assertSame($expectedContent, $result);
+    }
 }
