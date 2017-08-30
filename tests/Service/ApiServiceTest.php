@@ -223,4 +223,42 @@ class ApiServiceTest extends AbstractTestCase
 
         $this->apiService->listAll();
     }
+
+    public function testShouldGetImage()
+    {
+        $fileName = 'fileName';
+        $entryPoint = '/image/' . $fileName;
+        $expectedContent = 'content';
+        $response = $this->mockResponse(200, $expectedContent);
+        $this->mockClientGetRequest($entryPoint, $response);
+
+        $result = $this->apiService->get($fileName);
+
+        $this->assertSame($expectedContent, $result);
+    }
+
+    /**
+     * @dataProvider errorStatusCodeProvider
+     */
+    public function testShouldThrowApiExceptionOnGetImage(int $errorStatusCode)
+    {
+        $fileName = 'fileName';
+        $entryPoint = '/image/' . $fileName;
+
+        $errorContents = 'errorContents';
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage($errorContents);
+
+        $response = $this->mockResponse($errorStatusCode, $errorContents);
+        $this->mockClientGetRequest($entryPoint, $response);
+
+        $this->apiService->get($fileName);
+    }
+
+    public function testShouldThrowImageExceptionOnEmptyGetImage()
+    {
+        $this->expectException(ImageException::class);
+
+        $this->apiService->get('');
+    }
 }

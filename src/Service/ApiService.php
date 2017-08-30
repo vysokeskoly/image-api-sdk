@@ -100,6 +100,11 @@ class ApiService
 
     private function getResultDecoded(string $endpoint): array
     {
+        return json_decode($this->getImage($endpoint), true);
+    }
+
+    private function getImage(string $endpoint): string
+    {
         $res = $this->client->request(
             'GET',
             $this->apiUrl . $endpoint . $this->getAuth()
@@ -110,6 +115,19 @@ class ApiService
             throw ApiException::create($res->getStatusCode(), $contents);
         }
 
-        return json_decode($contents, true);
+        return $contents;
+    }
+
+    public function get(string $fileName): string
+    {
+        try {
+            Assertion::notEmpty($fileName);
+
+            return $this->getImage('/image/' . $fileName);
+        } catch (ApiException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw ApiException::from($e);
+        }
     }
 }

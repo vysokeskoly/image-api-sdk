@@ -177,4 +177,15 @@ class ImageApiUploader implements ImageUploaderInterface
     {
         return $this->apiService->listAll();
     }
+
+    /**
+     * @param string $fileName
+     * @return string
+     *
+     * @throws ImageException
+     */
+    public function get(string $fileName): string
+    {
+        return $this->apiService->get($fileName);
+    }
 }
