@@ -12,12 +12,12 @@ class ApiService
 {
     /** @var Client */
     private $client;
-
     /** @var string */
     private $apiUrl;
-
     /** @var string */
     private $apiKey;
+    /** @var string|null */
+    private $namespace;
 
     public function __construct(Client $client, string $apiUrl, string $apiKey)
     {
@@ -42,7 +42,7 @@ class ApiService
     {
         $res = $this->client->request(
             'POST',
-            $this->apiUrl . $endpoint . $this->getAuth(),
+            $this->getApiUrl($endpoint),
             [
                 'multipart' => [
                     [
@@ -59,9 +59,21 @@ class ApiService
         }
     }
 
+    private function getApiUrl(string $endpoint): string
+    {
+        return $this->apiUrl . $endpoint . $this->getAuth() . $this->addNamespace();
+    }
+
     private function getAuth(): string
     {
         return '?apikey=' . $this->apiKey;
+    }
+
+    private function addNamespace(): string
+    {
+        return $this->namespace !== null
+            ? sprintf('&namespace=%s', trim($this->namespace, ' /'))
+            : '';
     }
 
     public function delete(string $fileName)
@@ -77,10 +89,7 @@ class ApiService
 
     private function deleteImage(string $endpoint): void
     {
-        $res = $this->client->request(
-            'DELETE',
-            $this->apiUrl . $endpoint . $this->getAuth()
-        );
+        $res = $this->client->request('DELETE', $this->getApiUrl($endpoint));
 
         if ($res->getStatusCode() >= 400) {
             throw ApiException::create($res->getStatusCode(), $res->getBody()->getContents());
@@ -105,10 +114,7 @@ class ApiService
 
     private function getImage(string $endpoint): string
     {
-        $res = $this->client->request(
-            'GET',
-            $this->apiUrl . $endpoint . $this->getAuth()
-        );
+        $res = $this->client->request('GET', $this->getApiUrl($endpoint));
 
         $contents = $res->getBody()->getContents();
         if ($res->getStatusCode() >= 400) {
@@ -129,5 +135,10 @@ class ApiService
         } catch (\Exception $e) {
             throw ApiException::from($e);
         }
+    }
+
+    public function useNamespace(string $namespace): void
+    {
+        $this->namespace = $namespace;
     }
 }

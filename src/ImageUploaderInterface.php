@@ -52,4 +52,6 @@ interface ImageUploaderInterface
      * @throws ImageException
      */
     public function get(string $fileName): string;
+
+    public function useNamespace(string $namespace): void;
 }

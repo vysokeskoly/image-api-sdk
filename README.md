@@ -34,3 +34,9 @@ services:
             $apiUrl: '%apiUrl%'
             $apiKey: '%apiKey%'
 ```
+
+If you are using a `namespace` add
+```yaml
+        calls:
+            - [ useNamespace, [ 'my-namespace' ]]
+```

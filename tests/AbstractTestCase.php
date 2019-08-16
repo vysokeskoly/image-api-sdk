@@ -7,6 +7,8 @@ use PHPUnit\Framework\TestCase;
 
 abstract class AbstractTestCase extends TestCase
 {
+    use m\Adapter\Phpunit\MockeryPHPUnitIntegration;
+
     /** @var bool */
     protected static $isGmagickEnabled = true;
 
@@ -19,11 +21,5 @@ abstract class AbstractTestCase extends TestCase
             require_once __DIR__ . '/Fixtures/Gmagick.php';
             // @codingStandardsIgnoreEnd
         }
-    }
-
-    protected function tearDown()
-    {
-        parent::tearDown();
-        m::close();
     }
 }
