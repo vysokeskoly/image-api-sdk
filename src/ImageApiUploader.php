@@ -2,6 +2,7 @@
 
 namespace VysokeSkoly\ImageApi\Sdk;
 
+use Assert\Assertion;
 use GuzzleHttp\Client;
 use VysokeSkoly\ImageApi\Sdk\Entity\Coordination;
 use VysokeSkoly\ImageApi\Sdk\Entity\Result;
@@ -14,16 +15,12 @@ class ImageApiUploader implements ImageUploaderInterface
 {
     /** @var int */
     private $imageMaxSize;
-
     /** @var string */
     private $imageUrl;
-
     /** @var ImageValidator */
     protected $imageValidator;
-
     /** @var ApiService */
     protected $apiService;
-
     /** @var ImageFactory */
     protected $imageFactory;
 
@@ -40,6 +37,13 @@ class ImageApiUploader implements ImageUploaderInterface
         $this->apiService = new ApiService(new Client(), $apiUrl, $apiKey);
         $this->imageFactory = new ImageFactory();
         $this->imageUrl = $imageUrl;
+    }
+
+    public function useNamespace(string $namespace): void
+    {
+        Assertion::notEmpty($namespace, 'Namespace must not be empty.');
+
+        $this->apiService->useNamespace($namespace);
     }
 
     /**
@@ -71,7 +75,7 @@ class ImageApiUploader implements ImageUploaderInterface
 
     private function loadImageContent(string $uploadedFile): string
     {
-        return file_get_contents($uploadedFile, false);
+        return file_get_contents($uploadedFile);
     }
 
     private function resizeImage(string $imageData, int $minWidth, int $minHeight): \Gmagick

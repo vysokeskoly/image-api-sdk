@@ -237,4 +237,13 @@ class ImageApiUploaderTest extends AbstractTestCase
 
         $this->assertSame($expectedContent, $result);
     }
+
+    public function testShouldPassNamespaceToApiService()
+    {
+        $this->imageApiUploader->useNamespace('namespace');
+
+        $this->apiService->shouldHaveReceived('useNamespace')
+            ->with('namespace')
+            ->once();
+    }
 }

@@ -15,6 +15,7 @@ class ApiServiceTest extends AbstractTestCase
 {
     const API_URL = 'api';
     const API_KEY = 'key';
+    const NAMESPACE = 'my-namespace';
 
     /** @var ApiService */
     private $apiService;
@@ -33,18 +34,36 @@ class ApiServiceTest extends AbstractTestCase
         );
     }
 
-    public function testShouldSaveImage()
+    /**
+     * @dataProvider provideNamespace
+     */
+    public function testShouldSaveImage(?string $namespace)
     {
         $content = 'content';
         $fileName = 'filename';
-        $apiUrl = self::API_URL . '/image/?apikey=' . self::API_KEY;
+
+        $baseApiUrl = self::API_URL . '/image/?apikey=' . self::API_KEY;
+        $apiUrl = $namespace !== null
+            ? $baseApiUrl . '&namespace=' . $namespace
+            : $baseApiUrl;
 
         $response = $this->mockResponse(200);
         $this->mockClientPostRequest($apiUrl, $fileName, $content, $response);
 
-        $this->apiService->saveString($content, $fileName);
+        if ($namespace !== null) {
+            $this->apiService->useNamespace($namespace);
+        }
 
-        $this->assertTrue(true);
+        $this->apiService->saveString($content, $fileName);
+    }
+
+    public function provideNamespace(): array
+    {
+        return [
+            // namespace
+            'without' => [null],
+            'with namespace' => [self::NAMESPACE],
+        ];
     }
 
     /**
@@ -140,21 +159,27 @@ class ApiServiceTest extends AbstractTestCase
         ];
     }
 
-    public function testShouldDeleteImage()
+    /** @dataProvider provideNamespace */
+    public function testShouldDeleteImage(?string $namespace)
     {
         $fileName = 'file-to-delete';
 
         $response = $this->mockResponse(200);
-        $this->mockClientDeleteRequest($fileName, $response);
+        $this->mockClientDeleteRequest($namespace, $fileName, $response);
+
+        if ($namespace !== null) {
+            $this->apiService->useNamespace($namespace);
+        }
 
         $this->apiService->delete($fileName);
-
-        $this->assertTrue(true);
     }
 
-    private function mockClientDeleteRequest(string $fileName, ResponseInterface $response)
+    private function mockClientDeleteRequest(?string $namespace, string $fileName, ResponseInterface $response)
     {
-        $apiUrl = self::API_URL . '/image/' . $fileName . '?apikey=' . self::API_KEY;
+        $baseApiUrl = self::API_URL . '/image/' . $fileName . '?apikey=' . self::API_KEY;
+        $apiUrl = $namespace !== null
+            ? $baseApiUrl . '&namespace=' . $namespace
+            : $baseApiUrl;
 
         $this->client->shouldReceive('request')
             ->with('DELETE', $apiUrl)
@@ -181,26 +206,35 @@ class ApiServiceTest extends AbstractTestCase
         $fileName = 'file-to-delete';
 
         $response = $this->mockResponse($errorStatusCode, $errorContents);
-        $this->mockClientDeleteRequest($fileName, $response);
+        $this->mockClientDeleteRequest(null, $fileName, $response);
 
         $this->apiService->delete($fileName);
     }
 
-    public function testShouldListAll()
+    /** @dataProvider provideNamespace */
+    public function testShouldListAll(?string $namespace)
     {
         $entryPoint = '/list/';
         $expectedList = ['file'];
         $response = $this->mockResponse(200, json_encode($expectedList));
-        $this->mockClientGetRequest($entryPoint, $response);
+        $this->mockClientGetRequest($namespace, $entryPoint, $response);
+
+        if ($namespace !== null) {
+            $this->apiService->useNamespace($namespace);
+        }
 
         $result = $this->apiService->listAll();
 
         $this->assertSame($expectedList, $result);
     }
 
-    private function mockClientGetRequest(string $expectedEntryPoint, ResponseInterface $response)
+    private function mockClientGetRequest(?string $namespace, string $expectedEntryPoint, ResponseInterface $response)
     {
-        $apiUrl = self::API_URL . $expectedEntryPoint . '?apikey=' . self::API_KEY;
+        $baseApiUrl = self::API_URL . $expectedEntryPoint . '?apikey=' . self::API_KEY;
+        $apiUrl = $namespace !== null
+            ? $baseApiUrl . '&namespace=' . $namespace
+            : $baseApiUrl;
+
         $this->client->shouldReceive('request')
             ->with('GET', $apiUrl)
             ->once()
@@ -219,18 +253,23 @@ class ApiServiceTest extends AbstractTestCase
         $this->expectExceptionMessage($errorContents);
 
         $response = $this->mockResponse($errorStatusCode, $errorContents);
-        $this->mockClientGetRequest($entryPoint, $response);
+        $this->mockClientGetRequest(null, $entryPoint, $response);
 
         $this->apiService->listAll();
     }
 
-    public function testShouldGetImage()
+    /** @dataProvider provideNamespace */
+    public function testShouldGetImage(?string $namespace)
     {
         $fileName = 'fileName';
         $entryPoint = '/image/' . $fileName;
         $expectedContent = 'content';
         $response = $this->mockResponse(200, $expectedContent);
-        $this->mockClientGetRequest($entryPoint, $response);
+        $this->mockClientGetRequest($namespace, $entryPoint, $response);
+
+        if ($namespace !== null) {
+            $this->apiService->useNamespace($namespace);
+        }
 
         $result = $this->apiService->get($fileName);
 
@@ -250,7 +289,7 @@ class ApiServiceTest extends AbstractTestCase
         $this->expectExceptionMessage($errorContents);
 
         $response = $this->mockResponse($errorStatusCode, $errorContents);
-        $this->mockClientGetRequest($entryPoint, $response);
+        $this->mockClientGetRequest(null, $entryPoint, $response);
 
         $this->apiService->get($fileName);
     }
