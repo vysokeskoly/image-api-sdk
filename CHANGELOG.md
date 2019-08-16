@@ -2,6 +2,8 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+
+## 1.4.0 - 2019-08-16
 - Add `namespace` for images in storage
 
 ## 1.3.0 - 2017-08-30
