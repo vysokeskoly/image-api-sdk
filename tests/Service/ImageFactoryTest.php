@@ -1,9 +1,9 @@
 <?php
 
-namespace VysokeSkoly\Tests\ImageApi\Sdk\Service;
+namespace VysokeSkoly\ImageApi\Sdk\Service;
 
 use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
-use VysokeSkoly\Tests\ImageApi\Sdk\AbstractTestCase;
+use VysokeSkoly\ImageApi\Sdk\AbstractTestCase;
 
 class ImageFactoryTest extends AbstractTestCase
 {
