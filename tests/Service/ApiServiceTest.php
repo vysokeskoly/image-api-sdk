@@ -1,6 +1,6 @@
 <?php
 
-namespace VysokeSkoly\Tests\ImageApi\Sdk\Service;
+namespace VysokeSkoly\ImageApi\Sdk\Service;
 
 use Guzzle\Stream\StreamInterface;
 use GuzzleHttp\Client;
@@ -9,7 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use VysokeSkoly\ImageApi\Sdk\Exception\ApiException;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Service\ApiService;
-use VysokeSkoly\Tests\ImageApi\Sdk\AbstractTestCase;
+use VysokeSkoly\ImageApi\Sdk\AbstractTestCase;
 
 class ApiServiceTest extends AbstractTestCase
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace VysokeSkoly\Tests\ImageApi\Sdk\Service;
+namespace VysokeSkoly\ImageApi\Sdk\Service;
 
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\InvalidMimeTypeException;
@@ -8,7 +8,7 @@ use VysokeSkoly\ImageApi\Sdk\Exception\TooBigImageFileSizeException;
 use VysokeSkoly\ImageApi\Sdk\Exception\TooSmallImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageException;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageValidator;
-use VysokeSkoly\Tests\ImageApi\Sdk\AbstractTestCase;
+use VysokeSkoly\ImageApi\Sdk\AbstractTestCase;
 
 class ImageValidatorTest extends AbstractTestCase
 {

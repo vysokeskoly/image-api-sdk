@@ -1,6 +1,6 @@
 <?php
 
-namespace VysokeSkoly\Tests\ImageApi\Sdk\Fixtures;
+namespace VysokeSkoly\ImageApi\Sdk\Fixtures;
 
 use VysokeSkoly\ImageApi\Sdk\ImageApiUploader;
 use VysokeSkoly\ImageApi\Sdk\Service\ApiService;

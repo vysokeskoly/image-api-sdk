@@ -1,6 +1,6 @@
 <?php
 
-namespace VysokeSkoly\Tests\ImageApi\Sdk;
+namespace VysokeSkoly\ImageApi\Sdk;
 
 use Mockery as m;
 use PHPUnit\Framework\TestCase;

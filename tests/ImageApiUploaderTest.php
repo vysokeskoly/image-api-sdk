@@ -1,13 +1,13 @@
 <?php
 
-namespace VysokeSkoly\Tests\ImageApi\Sdk;
+namespace VysokeSkoly\ImageApi\Sdk;
 
 use Mockery as m;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageException;
 use VysokeSkoly\ImageApi\Sdk\Service\ApiService;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
-use VysokeSkoly\Tests\ImageApi\Sdk\Fixtures\TestableImageApiUploader;
+use VysokeSkoly\ImageApi\Sdk\Fixtures\TestableImageApiUploader;
 
 class ImageApiUploaderTest extends AbstractTestCase
 {
