@@ -2,13 +2,8 @@
 
 namespace VysokeSkoly\ImageApi\Sdk\ValueObject;
 
-/**
- * @todo implement \Stringable
- */
-class ImageHash implements \JsonSerializable
+class ImageHash implements \JsonSerializable, \Stringable
 {
-    private string $hash;
-
     public static function createFromContent(ImageContent $content): self
     {
         return new self(sha1($content->getContent()));
@@ -19,9 +14,8 @@ class ImageHash implements \JsonSerializable
         return self::createFromContent(ImageContent::loadFromPath($path));
     }
 
-    public function __construct(string $hash)
+    public function __construct(private string $hash)
     {
-        $this->hash = $hash;
     }
 
     public function getHash(): string

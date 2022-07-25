@@ -13,18 +13,11 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageInterface;
 
 class CommandQueryFactory
 {
-    private RequestFactoryInterface $requestFactory;
-    private StreamFactoryInterface $streamFactory;
-    private ApiProvider $apiProvider;
-
     public function __construct(
-        RequestFactoryInterface $requestFactory,
-        StreamFactoryInterface $streamFactory,
-        ApiProvider $apiProvider
+        private RequestFactoryInterface $requestFactory,
+        private StreamFactoryInterface $streamFactory,
+        private ApiProvider $apiProvider,
     ) {
-        $this->requestFactory = $requestFactory;
-        $this->streamFactory = $streamFactory;
-        $this->apiProvider = $apiProvider;
     }
 
     public function createUploadCommand(ImageInterface $image): UploadImageCommand
@@ -33,7 +26,7 @@ class CommandQueryFactory
             $this->requestFactory,
             $this->streamFactory,
             $this->apiProvider->getImageApi(),
-            $image
+            $image,
         );
     }
 

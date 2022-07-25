@@ -9,12 +9,9 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\Api;
 
 class ListImagesQuery extends AbstractHttpGetQuery
 {
-    private Api $api;
-
-    public function __construct(RequestFactoryInterface $requestFactory, Api $api)
+    public function __construct(RequestFactoryInterface $requestFactory, private Api $api)
     {
         parent::__construct($requestFactory);
-        $this->api = $api;
     }
 
     public function getUri(): string

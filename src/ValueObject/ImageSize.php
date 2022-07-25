@@ -5,9 +5,6 @@ namespace VysokeSkoly\ImageApi\Sdk\ValueObject;
 /** @phpstan-implements \ArrayAccess<int|string, int> */
 class ImageSize implements \ArrayAccess, \JsonSerializable
 {
-    private int $width;
-    private int $height;
-
     public static function empty(): self
     {
         return new self(0, 0);
@@ -17,14 +14,12 @@ class ImageSize implements \ArrayAccess, \JsonSerializable
     {
         return new self(
             $imagick->getImageWidth(),
-            $imagick->getImageHeight()
+            $imagick->getImageHeight(),
         );
     }
 
-    public function __construct(int $width, int $height)
+    public function __construct(private int $width, private int $height)
     {
-        $this->width = $width;
-        $this->height = $height;
     }
 
     public function getWidth(): int
@@ -54,25 +49,11 @@ class ImageSize implements \ArrayAccess, \JsonSerializable
 
     public function offsetGet($offset): ?int
     {
-        if ($offset === 0 || $offset === 'width') {
-            return $this->getWidth();
-        }
-        if ($offset === 1 || $offset === 'height') {
-            return $this->getHeight();
-        }
-
-        return null;
-        // todo - use match on php 8.1
-        // switch ($offset) {
-        //     case 'width':
-        //     case 0:
-        //         return $this->getWidth();
-        //     case 'height':
-        //     case 1:
-        //         return $this->getHeight();
-        //     default:
-        //         return null;
-        // }
+        return match ($offset) {
+            0, 'width' => $this->getWidth(),
+            1, 'height' => $this->getHeight(),
+            default => null
+        };
     }
 
     public function offsetSet($offset, $value): void

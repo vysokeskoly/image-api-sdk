@@ -5,14 +5,10 @@ namespace VysokeSkoly\ImageApi\Sdk\ValueObject;
 class Api
 {
     private string $apiUrl;
-    private string $apiKey;
-    private ?string $namespace;
 
-    public function __construct(string $apiUrl, string $apiKey, ?string $namespace)
+    public function __construct(string $apiUrl, private string $apiKey, private ?string $namespace)
     {
         $this->apiUrl = rtrim($apiUrl, '/');
-        $this->apiKey = $apiKey;
-        $this->namespace = $namespace;
     }
 
     public function getApiUrl(): string
@@ -37,7 +33,7 @@ class Api
             $this->getApiUrl(),
             ltrim($path, '/'),
             $this->getApiKey(),
-            $this->getNamespace() ? sprintf('&namespace=%s', trim($this->getNamespace(), ' /')) : ''
+            $this->getNamespace() ? sprintf('&namespace=%s', trim($this->getNamespace(), ' /')) : '',
         );
     }
 }

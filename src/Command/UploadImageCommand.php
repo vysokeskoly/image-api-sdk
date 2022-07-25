@@ -14,21 +14,15 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageInterface;
 
 class UploadImageCommand extends AbstractHttpPostCommand
 {
-    private StreamFactoryInterface $streamFactory;
-    private Api $api;
-    private ImageInterface $image;
     private ?MultipartStreamBuilder $builder = null;
 
     public function __construct(
         RequestFactoryInterface $requestFactory,
-        StreamFactoryInterface $streamFactory,
-        Api $api,
-        ImageInterface $image
+        private StreamFactoryInterface $streamFactory,
+        private Api $api,
+        private ImageInterface $image,
     ) {
         parent::__construct($requestFactory);
-        $this->streamFactory = $streamFactory;
-        $this->api = $api;
-        $this->image = $image;
     }
 
     public function getUri(): string
@@ -50,7 +44,7 @@ class UploadImageCommand extends AbstractHttpPostCommand
                 $this->image->asStream($this->streamFactory),
                 [
                     'filename' => $this->image->getHash()->getHash(),
-                ]
+                ],
             );
         }
 

@@ -5,13 +5,8 @@ namespace VysokeSkoly\ImageApi\Sdk\ValueObject;
 use VysokeSkoly\ImageApi\Sdk\Assertion;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 
-/**
- * @todo implement \Stringable
- */
-class ImageContent
+class ImageContent implements \Stringable
 {
-    private string $content;
-
     public static function loadFromPath(ImagePath $path): self
     {
         try {
@@ -24,10 +19,9 @@ class ImageContent
         }
     }
 
-    public function __construct(string $content)
+    public function __construct(private string $content)
     {
         Assertion::notEmpty($content);
-        $this->content = $content;
     }
 
     public function getContent(): string

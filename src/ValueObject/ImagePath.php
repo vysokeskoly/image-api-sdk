@@ -4,17 +4,11 @@ namespace VysokeSkoly\ImageApi\Sdk\ValueObject;
 
 use VysokeSkoly\ImageApi\Sdk\Assertion;
 
-/**
- * @todo implement \Stringable
- */
-class ImagePath implements \JsonSerializable
+class ImagePath implements \JsonSerializable, \Stringable
 {
-    private string $path;
-
-    public function __construct(string $path)
+    public function __construct(private string $path)
     {
         Assertion::file($path);
-        $this->path = $path;
     }
 
     public function getPath(): string

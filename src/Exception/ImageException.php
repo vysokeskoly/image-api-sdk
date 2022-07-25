@@ -6,33 +6,23 @@ use Assert\AssertionFailedException;
 
 class ImageException extends \InvalidArgumentException implements ImageExceptionInterface, AssertionFailedException
 {
-    private ?string $propertyPath = null;
-    /** @var mixed */
-    private $value = null;
-    private array $constraints = [];
-
     public static function from(\Throwable $e): self
     {
-        // todo - use previous: $e on php 8.1
-        return new self($e->getMessage(), null, null, null, [], $e);
+        return new self($e->getMessage(), previous: $e);
     }
 
     /**
-     * @param mixed $value
      * @phpstan-param mixed[] $constraints
      */
     public function __construct(
         string $message,
         int $code = null,
-        ?string $propertyPath = null,
-        $value = null,
-        array $constraints = [],
-        \Throwable $previous = null
+        private ?string $propertyPath = null,
+        private mixed $value = null,
+        private array $constraints = [],
+        \Throwable $previous = null,
     ) {
         parent::__construct($message, (int) $code, $previous);
-        $this->propertyPath = $propertyPath;
-        $this->value = $value;
-        $this->constraints = $constraints;
     }
 
     public function getPropertyPath(): ?string
@@ -40,8 +30,7 @@ class ImageException extends \InvalidArgumentException implements ImageException
         return $this->propertyPath;
     }
 
-    /** @return mixed */
-    public function getValue()
+    public function getValue(): mixed
     {
         return $this->value;
     }

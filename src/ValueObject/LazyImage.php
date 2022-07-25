@@ -8,13 +8,11 @@ use VysokeSkoly\ImageApi\Sdk\Assertion;
 
 class LazyImage implements ImageInterface
 {
-    private ImagePath $path;
     private bool $isLoaded = false;
     private ?Image $image = null;
 
-    public function __construct(ImagePath $path)
+    public function __construct(private ImagePath $path)
     {
-        $this->path = $path;
     }
 
     public function load(): void
@@ -31,7 +29,7 @@ class LazyImage implements ImageInterface
                 $this->path,
                 $content,
                 ImageHash::createFromContent($content),
-                $this->loadImagick()
+                $this->loadImagick(),
             );
 
             $this->isLoaded = true;
