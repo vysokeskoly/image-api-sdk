@@ -12,12 +12,12 @@ VysokeSkoly / ImageApiSdk
 ## Installation
 ```json
 {
-    "vysokeskoly/image-api-sdk": "^1.0"
+    "vysokeskoly/image-api-sdk": "^3.0"
 }
 ```
 
 ## Requirements
-- `PHP 7.4`
+- `PHP 8.1`
 - Corresponding version of [ImageApi](https://github.com/vysokeskoly/image-api)
 
 ## Usage
