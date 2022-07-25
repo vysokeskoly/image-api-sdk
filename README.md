@@ -57,9 +57,6 @@ services:
             - { name: lmc_cqrs.response_decoder, priority: 55 }
 ```
 
-// todo - zamyslet se nad configuraci pro symfony (napr jak predat Api atd - spis by bylo lepsi tady zaregistrovat nejaky manager tech scalarnich typu a ten uploader by si ho vzal..)
-    - nebo pridat factory (factory metodu ? - kouknout jak se to v tech services.yaml ted dela)
-
 NOTE: If you need size information about just Saved images, you need to enable Image Cache for a decoder.
 ```php
 \VysokeSkoly\ImageApi\Sdk\Service\ImagesCache::enable();
