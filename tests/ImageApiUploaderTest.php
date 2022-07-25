@@ -1,249 +1,190 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace VysokeSkoly\ImageApi\Sdk;
 
+use Lmc\Cqrs\Types\ValueObject\CacheTime;
 use Mockery as m;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use VysokeSkoly\ImageApi\Sdk\Command\DeleteImageCommand;
+use VysokeSkoly\ImageApi\Sdk\Command\UploadImageCommand;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
-use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageException;
-use VysokeSkoly\ImageApi\Sdk\Service\ApiService;
-use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
-use VysokeSkoly\ImageApi\Sdk\Fixtures\TestableImageApiUploader;
+use VysokeSkoly\ImageApi\Sdk\Fixtures\UploadCommandHandler;
+use VysokeSkoly\ImageApi\Sdk\Query\GetImageQuery;
+use VysokeSkoly\ImageApi\Sdk\Query\ListImagesQuery;
+use VysokeSkoly\ImageApi\Sdk\Service\ApiProvider;
+use VysokeSkoly\ImageApi\Sdk\Service\CommandQueryFactory;
+use VysokeSkoly\ImageApi\Sdk\Service\ImagesCache;
+use VysokeSkoly\ImageApi\Sdk\Service\SavedImageDecoder;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageHash;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\SavedImage;
 
 class ImageApiUploaderTest extends AbstractTestCase
 {
-    const IMAGE_URL = 'imageUrl/';
+    private const MAX_IMAGE_SIZE = 200;
 
-    /** @var TestableImageApiUploader */
-    private $imageApiUploader;
+    private ImageApiUploader $imageApiUploader;
+    /** @var RequestFactoryInterface|m\MockInterface */
+    private RequestFactoryInterface $requestFactory;
+    private StreamFactoryInterface $streamFactory;
 
-    /** @var ApiService|m\MockInterface */
-    private $apiService;
-
-    /** @var ImageFactory|m\MockInterface */
-    private $imageFactory;
-
-    public function setUp()
+    protected function setUp(): void
     {
-        $this->checkGmagick();
+        $this->requestFactory = m::mock(RequestFactoryInterface::class);
+        $this->streamFactory = new Psr17Factory();
 
-        $this->apiService = m::spy(ApiService::class);
-        $this->imageFactory = m::mock(ImageFactory::class);
-
-        $this->imageApiUploader = new TestableImageApiUploader(
-            ['JPG' => 'image/jpeg'],
-            2 * 1024 * 1024,
-            200,
-            self::IMAGE_URL,
-            'apiUrl',
-            'apiKey'
+        $commandQueryFactory = new CommandQueryFactory(
+            $this->requestFactory,
+            $this->streamFactory,
+            new ApiProvider('http://api', 'api-key', 'namespace')
         );
 
-        $this->imageApiUploader->setApiService($this->apiService);
+        $this->imageApiUploader = new ImageApiUploader(
+            ['JPG' => 'image/jpeg'],
+            2 * 1024 * 1024,
+            self::MAX_IMAGE_SIZE,
+            $commandQueryFactory
+        );
+    }
 
-        if (!self::$isGmagickEnabled) {
-            $this->imageApiUploader->setImageFactory($this->imageFactory);
+    /** @dataProvider provideLaziness */
+    public function testShouldValidateAndUploadImageAndDecodeResponse(bool $lazy): void
+    {
+        $image = $this->image('bruce.jpg', $lazy);
+
+        $uploadCommand = $this->imageApiUploader->validateAndUpload($image, new ImageSize(100, 100));
+
+        $this->assertInstanceOf(UploadImageCommand::class, $uploadCommand);
+        $this->assertSame('http://api/image/?apikey=api-key&namespace=namespace', $uploadCommand->getUri());
+        $this->assertSame('POST', $uploadCommand->getHttpMethod());
+        $this->assertUploadImageStream($image, $uploadCommand->createBody());
+
+        $this->assertTrue(ImagesCache::containsHash($image->getHash()));
+
+        // Validate decoded response
+        $response = UploadCommandHandler::SUCCESS_RESPONSE;
+        $response['messages'][] = $image->getHash()->getHash();
+        $savedImageDecoder = new SavedImageDecoder('http://cdn/');
+        $this->assertTrue($savedImageDecoder->supports($response, $uploadCommand));
+        $savedImages = $savedImageDecoder
+            ->decode($response)
+            ->getValue();
+
+        $this->assertIsArray($savedImages);
+        $this->assertCount(1, $savedImages);
+        $savedImage = array_shift($savedImages);
+        $this->assertInstanceOf(SavedImage::class, $savedImage);
+
+        $this->assertSame($image->getHash(), $savedImage->getHash());
+        $this->assertEquals($image->getSize(), $savedImage->getSize());
+        $this->assertSame(sprintf('http://cdn/%s/', $image->getHash()), $savedImage->getUrl());
+
+        // clear cache after "closing" ImageApiUploader
+        unset($this->imageApiUploader);
+        $this->assertFalse(ImagesCache::containsHash($image->getHash()));
+    }
+
+    /** @dataProvider provideLaziness */
+    public function testShouldValidateAndUploadImageWithResizing(bool $lazy): void
+    {
+        $image = $this->image('bigbruce.jpg', $lazy);
+
+        $uploadWithResizingCommand = $this->imageApiUploader->validateAndUpload($image, new ImageSize(100, 100));
+
+        $this->assertInstanceOf(UploadImageCommand::class, $uploadWithResizingCommand);
+        $this->assertSame('POST', $uploadWithResizingCommand->getHttpMethod());
+        $this->assertSame('http://api/image/?apikey=api-key&namespace=namespace', $uploadWithResizingCommand->getUri());
+
+        $resizedImage = $image->scalePortraitTo(self::MAX_IMAGE_SIZE);
+        $this->assertUploadImageStream($resizedImage, $uploadWithResizingCommand->createBody());
+    }
+
+    /** @dataProvider provideLaziness */
+    public function testShouldUploadImageWithoutResizing(bool $lazy): void
+    {
+        $image = $this->image('bigbruce.jpg', $lazy);
+
+        // Without resizing
+        $uploadWithoutResizingCommand = $this->imageApiUploader->upload($image);
+
+        $this->assertInstanceOf(UploadImageCommand::class, $uploadWithoutResizingCommand);
+        $this->assertSame('POST', $uploadWithoutResizingCommand->getHttpMethod());
+        $this->assertSame(
+            'http://api/image/?apikey=api-key&namespace=namespace',
+            $uploadWithoutResizingCommand->getUri()
+        );
+        $this->assertUploadImageStream($image, $uploadWithoutResizingCommand->createBody());
+    }
+
+    /** @dataProvider provideLaziness */
+    public function testShouldThrowUnableToLoadException(bool $lazy): void
+    {
+        if (!$lazy) {
+            $this->expectException(ImageException::class);
         }
-    }
+        $image = $this->image('empty.jpg', $lazy);
 
-    public function testShouldValidateAndUploadImage()
-    {
-        $imagePath = __DIR__ . '/Fixtures/bruce.jpg';
-        $width = 100;
-        $height = 132;
-
-        $imageData = file_get_contents($imagePath);
-        $expectedHash = sha1($imageData);
-        $expectedUrl = self::IMAGE_URL . $expectedHash . '/';
-
-        $expectedResult = ['url' => $expectedUrl, 'hash' => $expectedHash, 'width' => $width, 'height' => $height];
-
-        if (!self::$isGmagickEnabled) {
-            $this->mockImageFactory($height, $width, $imageData);
+        if ($lazy) {
+            $this->expectException(ImageException::class);
         }
-
-        $result = $this->imageApiUploader->validateAndUpload($imagePath, $width, $height);
-
-        $this->apiService->shouldHaveReceived('saveString')
-            ->with($imageData, $expectedHash)
-            ->once();
-
-        $this->assertSame($expectedResult, $result->toArray());
+        $this->imageApiUploader->upload($image);
     }
 
-    private function mockImageFactory(int $height, int $width, string $imageData): void
+    public function testShouldDeleteImage(): void
     {
-        $image = new \Gmagick();
-        $image->setHeight($height);
-        $image->setWidth($width);
-        $image->readimageblob($imageData);
+        $imageHash = new ImageHash('image-to-delete');
+        $deleteCommand = $this->imageApiUploader->delete($imageHash);
 
-        $this->imageFactory->shouldReceive('createImage')
-            ->with($imageData)
-            ->once()
-            ->andReturn($image);
+        $this->assertInstanceOf(DeleteImageCommand::class, $deleteCommand);
+        $this->assertSame('DELETE', $deleteCommand->getHttpMethod());
+        $this->assertSame(
+            sprintf('http://api/image/%s?apikey=api-key&namespace=namespace', $imageHash),
+            $deleteCommand->getUri()
+        );
     }
 
-    public function testShouldValidateAndUploadImageWithRatio()
+    public function testShouldListAll(): void
     {
-        $imagePath = __DIR__ . '/Fixtures/bruce.jpg';
-        $width = 100;
-        $height = 132;
-        $ratio = 0.5;
+        $listQuery = $this->imageApiUploader->listAllImageNames();
 
-        $imageData = file_get_contents($imagePath);
-        $expectedHash = sha1($imageData);
-        $expectedUrl = self::IMAGE_URL . $expectedHash . '/';
-
-        $expectedResult = [
-            'url' => $expectedUrl,
-            'hash' => $expectedHash,
-            'width' => $width,
-            'height' => $height,
-            'crop_topleft_x' => 17,
-            'crop_topleft_y' => 0,
-            'crop_bottomright_x' => 83,
-            'crop_bottomright_y' => 132,
-        ];
-
-        if (!self::$isGmagickEnabled) {
-            $this->mockImageFactory($height, $width, $imageData);
-        }
-
-        $result = $this->imageApiUploader->validateAndUpload($imagePath, $width, $height, $ratio);
-
-        $this->apiService->shouldHaveReceived('saveString')
-            ->with($imageData, $expectedHash)
-            ->once();
-
-        $this->assertSame($expectedResult, $result->toArray());
+        $this->assertInstanceOf(ListImagesQuery::class, $listQuery);
+        $this->assertSame('GET', $listQuery->getHttpMethod());
+        $this->assertSame('http://api/list/?apikey=api-key&namespace=namespace', $listQuery->getUri());
+        $this->assertEquals(CacheTime::noCache(), $listQuery->getCacheTime());
     }
 
-    public function testShouldValidateAndUploadImageWithResizing()
+    public function testShouldGetImage(): void
     {
-        $imagePath = __DIR__ . '/Fixtures/bigbruce.jpg';
-        $width = 214;
-        $height = 317;
+        $imageHash = new ImageHash('image');
+        $getImageQuery = $this->imageApiUploader->get($imageHash);
 
-        $imageData = file_get_contents($imagePath);
-        $expectedHash = sha1($imageData);
-        $expectedUrl = self::IMAGE_URL . $expectedHash . '/';
-
-        $expectedResult = ['url' => $expectedUrl, 'hash' => $expectedHash, 'width' => $width, 'height' => $height];
-
-        if (!self::$isGmagickEnabled) {
-            $this->mockImageFactory($height, $width, $imageData);
-        }
-
-        $result = $this->imageApiUploader->validateAndUpload($imagePath, $width, $height);
-
-        $this->apiService->shouldHaveReceived('saveString')
-            ->with($imageData, $expectedHash)
-            ->once();
-
-        $this->assertSame($expectedResult, $result->toArray());
+        $this->assertInstanceOf(GetImageQuery::class, $getImageQuery);
+        $this->assertSame('GET', $getImageQuery->getHttpMethod());
+        $this->assertSame(
+            sprintf('http://api/image/%s?apikey=api-key&namespace=namespace', $imageHash),
+            $getImageQuery->getUri()
+        );
+        $this->assertEquals(CacheTime::noCache(), $getImageQuery->getCacheTime());
     }
 
-    public function testShouldUploadImage()
+    /** @dataProvider provideLaziness */
+    public function testShouldUseCacheOnUpload(bool $lazy): void
     {
-        $imagePath = __DIR__ . '/Fixtures/bruce.jpg';
-        $width = 100;
-        $height = 132;
+        $image = $this->image('bruce.jpg', $lazy);
 
-        $imageData = file_get_contents($imagePath);
-        $expectedHash = sha1($imageData);
-        $expectedUrl = self::IMAGE_URL . $expectedHash . '/';
+        $this->imageApiUploader->enableCache();
+        $uploadCommand = $this->imageApiUploader->validateAndUpload($image, new ImageSize(100, 100));
 
-        $expectedResult = ['url' => $expectedUrl, 'hash' => $expectedHash, 'width' => $width, 'height' => $height];
+        $this->assertInstanceOf(UploadImageCommand::class, $uploadCommand);
+        $this->assertSame('http://api/image/?apikey=api-key&namespace=namespace', $uploadCommand->getUri());
+        $this->assertSame('POST', $uploadCommand->getHttpMethod());
+        $this->assertUploadImageStream($image, $uploadCommand->createBody());
 
-        $this->imageApiUploader->setImageFactory($this->imageFactory);
+        $this->assertTrue(ImagesCache::containsHash($image->getHash()));
 
-        $result = $this->imageApiUploader->upload($imagePath);
-
-        $this->imageFactory->shouldNotHaveReceived('createImage');
-        $this->apiService->shouldHaveReceived('saveString')
-            ->with($imageData, $expectedHash)
-            ->once();
-
-        $this->assertSame($expectedResult, $result->toArray());
-    }
-
-    public function testShouldThrowImageException()
-    {
-        $this->expectException(ImageException::class);
-        $invalidImagePath = 'invalid';
-
-        $this->imageApiUploader->validateAndUpload($invalidImagePath, 100, 100);
-    }
-
-    public function testShouldThrowUnableToLoadException()
-    {
-        $this->expectException(UnableToLoadImageException::class);
-        $emptyImagePath = __DIR__ . '/Fixtures/empty.jpg';
-
-        $this->imageApiUploader->upload($emptyImagePath);
-    }
-
-    public function testShouldThrowImageExceptionOnGmagickException()
-    {
-        $this->expectException(ImageException::class);
-
-        $this->imageFactory->shouldReceive('createImage')
-            ->andThrow(new \Exception('Some Gmagick exception'));
-
-        $this->imageApiUploader->setImageFactory($this->imageFactory);
-
-        $imagePath = __DIR__ . '/Fixtures/bruce.jpg';
-
-        $this->imageApiUploader->validateAndUpload($imagePath, 100, 100);
-    }
-
-    public function testShouldDeleteImage()
-    {
-        $imageName = 'image-to-delete';
-
-        $this->imageApiUploader->delete($imageName);
-
-        $this->apiService->shouldHaveReceived('delete')
-            ->with($imageName)
-            ->once();
-
-        $this->assertTrue(true);
-    }
-
-    public function testShouldListAll()
-    {
-        $expectedList = ['file'];
-
-        $this->apiService->shouldReceive('listAll')
-            ->once()
-            ->andReturn($expectedList);
-
-        $result = $this->imageApiUploader->listAllImageNames();
-
-        $this->assertSame($expectedList, $result);
-    }
-
-    public function testShouldGetImage()
-    {
-        $imageName = 'image';
-        $expectedContent = 'content';
-
-        $this->apiService->shouldReceive('get')
-            ->with($imageName)
-            ->once()
-            ->andReturn($expectedContent);
-
-        $result = $this->imageApiUploader->get($imageName);
-
-        $this->assertSame($expectedContent, $result);
-    }
-
-    public function testShouldPassNamespaceToApiService()
-    {
-        $this->imageApiUploader->useNamespace('namespace');
-
-        $this->apiService->shouldHaveReceived('useNamespace')
-            ->with('namespace')
-            ->once();
+        ImagesCache::disable();
+        $this->assertFalse(ImagesCache::containsHash($image->getHash()));
     }
 }

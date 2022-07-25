@@ -1,93 +1,74 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace VysokeSkoly\ImageApi\Sdk\Service;
 
+use VysokeSkoly\ImageApi\Sdk\AbstractTestCase;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\InvalidMimeTypeException;
 use VysokeSkoly\ImageApi\Sdk\Exception\TooBigImageFileSizeException;
 use VysokeSkoly\ImageApi\Sdk\Exception\TooSmallImageException;
-use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageException;
-use VysokeSkoly\ImageApi\Sdk\Service\ImageValidator;
-use VysokeSkoly\ImageApi\Sdk\AbstractTestCase;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
 
 class ImageValidatorTest extends AbstractTestCase
 {
-    public function testShouldValidateImage()
+    /** @dataProvider provideLaziness */
+    public function testShouldValidateImage(bool $lazy): void
     {
-        $image = __DIR__ . '/../Fixtures/bruce.jpg';
+        $image = $this->image('bruce.jpg', $lazy);
         $imageValidator = new ImageValidator(['JPG' => 'image/jpeg'], 10000);
 
-        $imageValidator->assertValidImage($image, 100, 100);
+        $imageValidator->assertValidImage($image, new ImageSize(100, 100));
 
         $this->assertTrue(true);
     }
 
-    public function testShouldValidateMimeType()
+    /** @dataProvider provideLaziness */
+    public function testShouldValidateMimeType(bool $lazy): void
     {
-        $image = __DIR__ . '/../Fixtures/bruce.jpg';
-        $expectedImageInfo = [
-            0 => 100,
-            1 => 132,
-            2 => 2,
-            3 => 'width="100" height="132"',
-            'bits' => 8,
-            'channels' => 3,
-            'mime' => 'image/jpeg',
-        ];
+        $image = $this->image('bruce.jpg', $lazy);
+
         $imageValidator = new ImageValidator(['JPG' => 'image/jpeg'], 666);
+        $imageValidator->assertImageMimeType($image);
 
-        $imageInfo = $imageValidator->assertImageMimeType($image);
-
-        $this->assertSame($expectedImageInfo, $imageInfo);
+        $this->assertEquals(new ImageSize(100, 132), $image->getSize());
+        $this->assertSame('image/jpeg', $image->getMimeType());
     }
 
-    public function testShouldThrowInvalidMimeTypeException()
+    /** @dataProvider provideLaziness */
+    public function testShouldThrowInvalidMimeTypeException(bool $lazy): void
     {
-        $this->expectException(InvalidMimeTypeException::class);
-
-        $image = __DIR__ . '/../Fixtures/bruce.jpg';
+        $image = $this->image('bruce.jpg', $lazy);
         $imageValidator = new ImageValidator(['GIF' => 'image/gif'], 666);
 
+        $this->expectException(InvalidMimeTypeException::class);
         $imageValidator->assertImageMimeType($image);
     }
 
-    public function testShouldThrowImageException()
+    /** @dataProvider provideLaziness */
+    public function testShouldThrowImageException(bool $lazy): void
     {
         $this->expectException(ImageException::class);
-        $invalidImagePath = 'invalid';
 
-        $imageValidator = new ImageValidator(['JPG' => 'image/jpeg'], 666);
-
-        $imageValidator->assertValidImage($invalidImagePath, 100, 100);
+        $this->image('invalid', $lazy);
     }
 
-    public function testShouldThrowUnableToLoadException()
+    /** @dataProvider provideLaziness */
+    public function testShouldThrowTooBigException(bool $lazy): void
     {
-        $this->expectException(UnableToLoadImageException::class);
-
-        $emptyImagePath = __DIR__ . '/../Fixtures/empty.jpg';
-        $imageValidator = new ImageValidator(['JPG' => 'image/jpeg'], 666);
-
-        $imageValidator->assertValidImage($emptyImagePath, 100, 100);
-    }
-
-    public function testShouldThrowTooBigException()
-    {
-        $this->expectException(TooBigImageFileSizeException::class);
-
-        $tooBigImage = __DIR__ . '/../Fixtures/bruce.jpg';
+        $tooBigImage = $this->image('bruce.jpg', $lazy);
         $imageValidator = new ImageValidator(['JPG' => 'image/jpeg'], 1);
 
-        $imageValidator->assertValidImage($tooBigImage, 100, 100);
+        $this->expectException(TooBigImageFileSizeException::class);
+        $imageValidator->assertValidImage($tooBigImage, new ImageSize(100, 100));
     }
 
-    public function testShouldThrowTooSmallImageException()
+    /** @dataProvider provideLaziness */
+    public function testShouldThrowTooSmallImageException(bool $lazy): void
     {
-        $this->expectException(TooSmallImageException::class);
-
-        $tooSmallImage = __DIR__ . '/../Fixtures/bruce.jpg';
+        $tooSmallImage = $this->image('bruce.jpg', $lazy);
         $imageValidator = new ImageValidator(['JPG' => 'image/jpeg'], 10000);
 
-        $imageValidator->assertValidImage($tooSmallImage, 1000, 1000);
+        $this->expectException(TooSmallImageException::class);
+        $imageValidator->assertValidImage($tooSmallImage, new ImageSize(1000, 1000));
     }
 }

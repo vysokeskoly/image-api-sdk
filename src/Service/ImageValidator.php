@@ -1,24 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace VysokeSkoly\ImageApi\Sdk\Service;
 
-use Assert\Assertion;
-use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
 use VysokeSkoly\ImageApi\Sdk\Exception\InvalidMimeTypeException;
 use VysokeSkoly\ImageApi\Sdk\Exception\TooBigImageFileSizeException;
 use VysokeSkoly\ImageApi\Sdk\Exception\TooSmallImageException;
-use VysokeSkoly\ImageApi\Sdk\Exception\UnableToLoadImageException;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageInterface;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
 
+/** @internal */
 class ImageValidator
 {
-    private const INDEX_MIN_WIDTH = 0;
-    private const INDEX_MIN_HEIGHT = 1;
-
-    /** @var array */
-    private $allowedMimeTypes;
-
-    /** @var int */
-    private $maxImageFileSize;
+    private array $allowedMimeTypes;
+    private int $maxImageFileSize;
 
     public function __construct(array $allowedMimeTypes, int $maxImageFileSize)
     {
@@ -26,70 +20,27 @@ class ImageValidator
         $this->maxImageFileSize = $maxImageFileSize;
     }
 
-    public function assertValidImage(string $imagePath, int $minWidth, int $minHeight): void
+    public function assertValidImage(ImageInterface $image, ImageSize $minSize): void
     {
-        try {
-            $imageInfo = $this->parseImageInfo($imagePath);
-            $this->assertMimeType($imageInfo);
+        $this->assertImageMimeType($image);
+        $this->assertFileSize($image);
+        $this->assertImageSize($image, $minSize);
+    }
 
-            if (!$this->isFileSizeCorrect($imagePath)) {
-                throw TooBigImageFileSizeException::create($this->getHumanReadableMaxSize());
-            }
+    public function assertImageMimeType(ImageInterface $image): void
+    {
+        $mimeType = $image->getMimeType();
 
-            if ($imageInfo[self::INDEX_MIN_WIDTH] < $minWidth || $imageInfo[self::INDEX_MIN_HEIGHT] < $minHeight) {
-                throw TooSmallImageException::create($minHeight, $minWidth);
-            }
-        } catch (ImageException $e) {
-            throw $e;
-        } catch (\Exception $e) {
-            throw ImageException::from($e);
+        if (!in_array($mimeType, $this->allowedMimeTypes, true)) {
+            throw InvalidMimeTypeException::create($mimeType, $this->allowedMimeTypes);
         }
     }
 
-    private function parseImageInfo(string $imagePath): array
+    private function assertFileSize(ImageInterface $image): void
     {
-        Assertion::file($imagePath);
-        $imageInfo = @getimagesize($imagePath);
-
-        if (!is_array($imageInfo)) {
-            throw UnableToLoadImageException::create();
+        if ($image->getFileSize() > $this->maxImageFileSize) {
+            throw TooBigImageFileSizeException::create($this->getHumanReadableMaxSize());
         }
-
-        return $imageInfo;
-    }
-
-    private function assertMimeType(array $imageInfo): void
-    {
-        if (!in_array($imageInfo['mime'], $this->allowedMimeTypes)) {
-            throw InvalidMimeTypeException::create($imageInfo['mime'], $this->allowedMimeTypes);
-        }
-    }
-
-    private function isFileSizeCorrect(string $image): bool
-    {
-        if (mb_strpos($image, '/tmp') !== false || mb_strpos($image, '/srv') !== false) {
-            return (filesize($image) <= $this->maxImageFileSize);
-        }
-
-        if ($fp = fopen($image, 'r')) {
-            $metaData = array_change_key_case(stream_get_meta_data($fp));
-            $contentLength = $this->parseContentLength($metaData);
-            fclose($fp);
-
-            return $contentLength <= $this->maxImageFileSize;
-        }
-
-        return false;
-    }
-
-    /**
-     * $metaData[wrapper_data][6] => 'Content-Length: 1234'
-     */
-    private function parseContentLength(array $metaData): int
-    {
-        return array_key_exists('wrapper_data', $metaData)
-            ? (int) array_pop(explode(' ', $metaData['wrapper_data'][6]))
-            : filesize($metaData['uri']);
     }
 
     private function getHumanReadableMaxSize(): int
@@ -97,11 +48,12 @@ class ImageValidator
         return (int) round($this->maxImageFileSize / (1024 * 1024), 0);
     }
 
-    public function assertImageMimeType(string $imagePath): array
+    private function assertImageSize(ImageInterface $image, ImageSize $minSize): void
     {
-        $imageInfo = $this->parseImageInfo($imagePath);
-        $this->assertMimeType($imageInfo);
+        $imageSize = $image->getSize();
 
-        return $imageInfo;
+        if ($imageSize->getWidth() < $minSize->getWidth() || $imageSize->getHeight() < $minSize->getHeight()) {
+            throw TooSmallImageException::create($minSize);
+        }
     }
 }

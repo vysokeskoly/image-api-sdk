@@ -1,195 +1,127 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace VysokeSkoly\ImageApi\Sdk;
 
-use Assert\Assertion;
-use GuzzleHttp\Client;
-use VysokeSkoly\ImageApi\Sdk\Entity\Coordination;
-use VysokeSkoly\ImageApi\Sdk\Entity\Result;
+use VysokeSkoly\ImageApi\Sdk\Command\DeleteImageCommand;
+use VysokeSkoly\ImageApi\Sdk\Command\UploadImageCommand;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
-use VysokeSkoly\ImageApi\Sdk\Service\ApiService;
-use VysokeSkoly\ImageApi\Sdk\Service\ImageFactory;
+use VysokeSkoly\ImageApi\Sdk\Query\GetImageQuery;
+use VysokeSkoly\ImageApi\Sdk\Query\ListImagesQuery;
+use VysokeSkoly\ImageApi\Sdk\Service\CommandQueryFactory;
+use VysokeSkoly\ImageApi\Sdk\Service\ImagesCache;
 use VysokeSkoly\ImageApi\Sdk\Service\ImageValidator;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageHash;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageInterface;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
 
 class ImageApiUploader implements ImageUploaderInterface
 {
-    /** @var int */
-    private $imageMaxSize;
-    /** @var string */
-    private $imageUrl;
-    /** @var ImageValidator */
-    protected $imageValidator;
-    /** @var ApiService */
-    protected $apiService;
-    /** @var ImageFactory */
-    protected $imageFactory;
+    private int $imageMaxSize;
+    protected ImageValidator $imageValidator;
+    protected CommandQueryFactory $commandQueryFactory;
 
     public function __construct(
         array $allowedMimeTypes,
         int $imageMaxFileSize,
         int $imageMaxSize,
-        string $imageUrl,
-        string $apiUrl,
-        string $apiKey
+        CommandQueryFactory $commandQueryFactory
     ) {
         $this->imageMaxSize = $imageMaxSize;
         $this->imageValidator = new ImageValidator($allowedMimeTypes, $imageMaxFileSize);
-        $this->apiService = new ApiService(new Client(), $apiUrl, $apiKey);
-        $this->imageFactory = new ImageFactory();
-        $this->imageUrl = $imageUrl;
+        $this->commandQueryFactory = $commandQueryFactory;
     }
 
-    public function useNamespace(string $namespace): void
+    public function __destruct()
     {
-        Assertion::notEmpty($namespace, 'Namespace must not be empty.');
-
-        $this->apiService->useNamespace($namespace);
+        ImagesCache::clear();
     }
 
     /**
-     * @param string $imagePath Full path file name
-     * @param int $minWidth
-     * @param int $minHeight
-     * @param float|null $aspectRatio
-     * @return Result
-     *
      * @throws ImageException
      */
-    public function validateAndUpload(
-        string $imagePath,
-        int $minWidth,
-        int $minHeight,
-        float $aspectRatio = null
-    ): Result {
-        $this->imageValidator->assertValidImage($imagePath, $minWidth, $minHeight);
-
-        $imageData = $this->loadImageContent($imagePath);
-        $image = $this->resizeImage($imageData, $minWidth, $minHeight);
-
-        $savedImage = $this->save($image, $image->getimagewidth(), $image->getimageheight());
-
-        return $aspectRatio !== null
-            ? $savedImage->setCoordination($this->calculateCoordination($image, $aspectRatio))
-            : $savedImage;
-    }
-
-    private function loadImageContent(string $uploadedFile): string
+    public function validateAndUpload(ImageInterface $image, ImageSize $minSize): UploadImageCommand
     {
-        return file_get_contents($uploadedFile);
+        $this->imageValidator->assertValidImage($image, $minSize);
+        $image = $this->resizeImage($image, $minSize);
+
+        return $this->save($image);
     }
 
-    private function resizeImage(string $imageData, int $minWidth, int $minHeight): \Gmagick
+    private function resizeImage(ImageInterface $image, ImageSize $minSize): ImageInterface
     {
         try {
-            $image = $this->imageFactory->createImage($imageData);
-
-            $width = $image->getimagewidth();
-            $height = $image->getimageheight();
+            $imageSize = $image->getSize();
+            [$width, $height] = $imageSize;
 
             /*
              * If both dimensions are larger than max size, resize image so to have bigger dimension max size.
              * Otherwise keep original image.
              */
             if ($width > $this->imageMaxSize || $height > $this->imageMaxSize) {
-                if ($width >= $height) {
-                    $image->scaleimage($this->imageMaxSize, 0);
-                } else {
-                    $image->scaleimage(0, $this->imageMaxSize);
-                }
+                $image = $imageSize->isLandscape()
+                    ? $image->scaleLandscapeTo($this->imageMaxSize)
+                    : $image->scalePortraitTo($this->imageMaxSize);
 
-                $width = $image->getimagewidth();
-                $height = $image->getimageheight();
+                $imageSize = $image->getSize();
+                [$minWidth, $minHeight] = $minSize;
+                [$width, $height] = $imageSize;
 
                 if ($width < $minWidth || $height < $minHeight) {
-                    if ($width >= $height) {
-                        $image->scaleimage(0, $minHeight);
-                    } else {
-                        $image->scaleimage($minWidth, 0);
-                    }
+                    $image = $imageSize->isLandscape()
+                        ? $image->scaleLandscapeTo($this->imageMaxSize)
+                        : $image->scalePortraitTo($this->imageMaxSize);
                 }
             }
 
             return $image;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             throw ImageException::from($e);
         }
     }
 
-    /**
-     * @param \Gmagick|string $image
-     * @param int $width
-     * @param int $height
-     * @return Result
-     */
-    private function save($image, int $width, int $height): Result
+    private function save(ImageInterface $image): UploadImageCommand
     {
-        $imageNameHash = sha1($image);
-        $this->apiService->saveString((string) $image, $imageNameHash);
+        ImagesCache::storeImage($image);
 
-        return new Result($this->imageUrl . $imageNameHash . '/', $imageNameHash, $width, $height);
-    }
-
-    private function calculateCoordination(\Gmagick $image, float $aspectRatio): Coordination
-    {
-        $width = $image->getimagewidth();
-        $height = $image->getimageheight();
-
-        if ($aspectRatio > ($width / $height)) {
-            $heightCounted = $width / $aspectRatio;
-            $padding = abs(($height - $heightCounted) / 2);
-            $coordination = new Coordination(0, $padding, $width, $heightCounted + $padding);
-        } else {
-            $widthCounted = $height * $aspectRatio;
-            $padding = abs(($width - $widthCounted) / 2);
-            $coordination = new Coordination($padding, 0, $widthCounted + $padding, $height);
-        }
-
-        return $coordination;
+        return $this->commandQueryFactory->createUploadCommand($image);
     }
 
     /**
-     * @param string $imagePath Full path file name
-     * @return Result
-     *
      * @throws ImageException
      */
-    public function upload(string $imagePath): Result
+    public function upload(ImageInterface $image): UploadImageCommand
     {
-        list($width, $height) = $this->imageValidator->assertImageMimeType($imagePath);
+        $this->imageValidator->assertImageMimeType($image);
 
-        $imageData = $this->loadImageContent($imagePath);
-
-        return $this->save($imageData, $width, $height);
+        return $this->save($image);
     }
 
     /**
-     * @param string $imageName
-     *
      * @throws ImageException
      */
-    public function delete(string $imageName): void
+    public function delete(ImageHash $imageHash): DeleteImageCommand
     {
-        $this->apiService->delete($imageName);
+        return $this->commandQueryFactory->createDeleteCommand($imageHash);
     }
 
     /**
-     * @return array
-     *
      * @throws ImageException
      */
-    public function listAllImageNames(): array
+    public function listAllImageNames(): ListImagesQuery
     {
-        return $this->apiService->listAll();
+        return $this->commandQueryFactory->createListQuery();
     }
 
     /**
-     * @param string $fileName
-     * @return string
-     *
      * @throws ImageException
      */
-    public function get(string $fileName): string
+    public function get(ImageHash $imageHash): GetImageQuery
     {
-        return $this->apiService->get($fileName);
+        return $this->commandQueryFactory->createGetQuery($imageHash);
+    }
+
+    public function enableCache(): void
+    {
+        ImagesCache::enable();
     }
 }

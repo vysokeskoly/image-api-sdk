@@ -1,10 +1,13 @@
 VysokeSkoly / ImageApiSdk
 =========================
 
-[![Build Status](https://travis-ci.org/vysokeskoly/image-api-sdk.svg?branch=master)](https://travis-ci.org/vysokeskoly/image-api-sdk)
-[![Coverage Status](https://coveralls.io/repos/github/vysokeskoly/image-api-sdk/badge.svg?branch=master)](https://coveralls.io/github/vysokeskoly/image-api-sdk?branch=master)
+[![Latest Stable Version](https://img.shields.io/packagist/v/vysokeskoly/image-api-sdk.svg)](https://packagist.org/packages/vysokeskoly/image-api-sdk)
+[![License](https://img.shields.io/packagist/l/vysokeskoly/image-api-sdk.svg)](https://packagist.org/packages/vysokeskoly/image-api-sdk)
+[![Checks](https://github.com/vysokeskoly/image-api-sdk/actions/workflows/checks.yaml/badge.svg)](https://github.com/vysokeskoly/image-api-sdk/actions/workflows/checks.yaml)
+[![Build](https://github.com/vysokeskoly/image-api-sdk/actions/workflows/php-checks.yaml/badge.svg)](https://github.com/vysokeskoly/image-api-sdk/actions/workflows/php-checks.yaml)
+[![Coverage Status](https://coveralls.io/repos/github/vysokeskoly/image-api-sdk/badge.svg)](https://coveralls.io/github/vysokeskoly/image-api-sdk)
 
-Sdk for ImageApi
+> Sdk for [ImageApi](https://github.com/vysokeskoly/image-api)
 
 ## Installation
 ```json
@@ -14,7 +17,7 @@ Sdk for ImageApi
 ```
 
 ## Requirements
-- `PHP 7.1`
+- `PHP 7.4`
 - Corresponding version of [ImageApi](https://github.com/vysokeskoly/image-api)
 
 ## Usage
@@ -22,21 +25,50 @@ Sdk for ImageApi
 ### In Symfony application
 ```yaml
 services:
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    VysokeSkoly\ImageApi\Sdk\ImageUploaderInterface: '@VysokeSkoly\ImageApi\Sdk\ImageApiUploader'
+
+    VysokeSkoly\ImageApi\Sdk\Service\ApiProvider:
+        $apiUrl: '%image_api_url%'
+        $apiKey: '%image_api_key%'
+        $namespace: '%image_api_namespace%'
+
+    VysokeSkoly\ImageApi\Sdk\Service\CommandQueryFactory: ~
+
     VysokeSkoly\ImageApi\Sdk\ImageApiUploader:
         arguments:
             $allowedMimeTypes:
                 GIF: 'image/gif'
                 JPEG: 'image/jpeg'
                 PNG: 'image/png'
-            $imageMaxFileSize: 2097152  # 2 * 1024 * 1024 - 2MB
+            $imageMaxFileSize: 8536064 # 8 * 1024 * 124 = 8 MB
             $imageMaxSize: 2048
-            $imageUrl: '%imageUrl%'
-            $apiUrl: '%apiUrl%'
-            $apiKey: '%apiKey%'
+        calls:
+            - [ enableCache ]
+
+    # optional
+    VysokeSkoly\ImageApi\Sdk\Service\SavedImageDecoder:
+        arguments:
+            $imageBaseUrl: '%image_api_url%'
+        tags:
+            - { name: lmc_cqrs.response_decoder, priority: 55 }
 ```
 
-If you are using a `namespace` add
+// todo - zamyslet se nad configuraci pro symfony (napr jak predat Api atd - spis by bylo lepsi tady zaregistrovat nejaky manager tech scalarnich typu a ten uploader by si ho vzal..)
+    - nebo pridat factory (factory metodu ? - kouknout jak se to v tech services.yaml ted dela)
+
+NOTE: If you need size information about just Saved images, you need to enable Image Cache for a decoder.
+```php
+\VysokeSkoly\ImageApi\Sdk\Service\ImagesCache::enable();
+```
+
+or in services declaration
 ```yaml
+    VysokeSkoly\ImageApi\Sdk\ImageApiUploader:
+        ...
         calls:
-            - [ useNamespace, [ 'my-namespace' ]]
+            - [ enableCache ]
 ```

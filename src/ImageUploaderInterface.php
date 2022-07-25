@@ -1,57 +1,48 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace VysokeSkoly\ImageApi\Sdk;
 
-use VysokeSkoly\ImageApi\Sdk\Entity\Result;
+use VysokeSkoly\ImageApi\Sdk\Command\DeleteImageCommand;
+use VysokeSkoly\ImageApi\Sdk\Command\UploadImageCommand;
 use VysokeSkoly\ImageApi\Sdk\Exception\ImageException;
+use VysokeSkoly\ImageApi\Sdk\Query\GetImageQuery;
+use VysokeSkoly\ImageApi\Sdk\Query\ListImagesQuery;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageHash;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageInterface;
+use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
 
 interface ImageUploaderInterface
 {
     /**
-     * @param string $imagePath Full path file name
-     * @param int $minWidth
-     * @param int $minHeight
-     * @param float|null $aspectRatio
-     * @return Result
-     *
      * @throws ImageException
      */
-    public function validateAndUpload(
-        string $imagePath,
-        int $minWidth,
-        int $minHeight,
-        float $aspectRatio = null
-    ): Result;
+    public function validateAndUpload(ImageInterface $image, ImageSize $minSize): UploadImageCommand;
 
     /**
-     * @param string $imagePath Full path file name
-     * @return Result
-     *
      * @throws ImageException
      */
-    public function upload(string $imagePath): Result;
+    public function upload(ImageInterface $image): UploadImageCommand;
 
     /**
-     * @param string $imageName
-     *
      * @throws ImageException
      */
-    public function delete(string $imageName): void;
+    public function delete(ImageHash $imageHash): DeleteImageCommand;
 
     /**
-     * @return array
-     *
      * @throws ImageException
      */
-    public function listAllImageNames(): array;
+    public function listAllImageNames(): ListImagesQuery;
 
     /**
-     * @param string $fileName
-     * @return string
-     *
      * @throws ImageException
      */
-    public function get(string $fileName): string;
+    public function get(ImageHash $imageHash): GetImageQuery;
 
-    public function useNamespace(string $namespace): void;
+    /**
+     * This allows the SavedImageDecoder to decode additional information about saved images.
+     * Make sure you are using the decoder, when a cache is enabled, so it is cleared properly.
+     *
+     * @see SavedImageDecoder
+     */
+    public function enableCache(): void;
 }

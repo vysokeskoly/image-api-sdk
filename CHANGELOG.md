@@ -2,6 +2,11 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+- Use php 7.4
+- [**BC**] Replace `gmagick` to `imagick`
+- Update dependencies
+- [**BC**] Refactor the library, to use `lmc/cqrs-http` as Commands and Queries instead of directly calling an API
+- Add and use value objects instead of scalar types
 
 ## 1.5.0 - 2019-11-28
 - Allow `beberlei/assert` 3
