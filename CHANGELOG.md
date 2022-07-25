@@ -2,6 +2,8 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+
+## 2.0.0 - 2022-07-25
 - Use php 7.4
 - [**BC**] Replace `gmagick` to `imagick`
 - Update dependencies
