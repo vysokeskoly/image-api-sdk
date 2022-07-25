@@ -35,8 +35,7 @@ abstract class AbstractTestCase extends TestCase
         ];
     }
 
-    /** @param mixed $expectedDecodedResult */
-    protected function assertJsonSerializable($expectedDecodedResult, \JsonSerializable $serializable): void
+    protected function assertJsonSerializable(mixed $expectedDecodedResult, \JsonSerializable $serializable): void
     {
         $decoded = json_decode((string) json_encode($serializable), true);
 
@@ -44,10 +43,9 @@ abstract class AbstractTestCase extends TestCase
     }
 
     /**
-     * @param mixed $stringable
      * @todo - use \Stringable interface type
      */
-    protected function assertStringable(string $expected, $stringable): void
+    protected function assertStringable(string $expected, \Stringable $stringable): void
     {
         $this->assertSame($expected, (string) $stringable);
     }
@@ -62,7 +60,7 @@ abstract class AbstractTestCase extends TestCase
         $this->assertStringContainsString(
             $expectedImage->getContent()->getContent(),
             $contents,
-            'Stream contents does not contain an expected image content.'
+            'Stream contents does not contain an expected image content.',
         );
     }
 }

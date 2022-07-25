@@ -16,19 +16,15 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
 
 class ImageApiUploader implements ImageUploaderInterface
 {
-    private int $imageMaxSize;
     protected ImageValidator $imageValidator;
-    protected CommandQueryFactory $commandQueryFactory;
 
     public function __construct(
         array $allowedMimeTypes,
         int $imageMaxFileSize,
-        int $imageMaxSize,
-        CommandQueryFactory $commandQueryFactory
+        private int $imageMaxSize,
+        protected CommandQueryFactory $commandQueryFactory,
     ) {
-        $this->imageMaxSize = $imageMaxSize;
         $this->imageValidator = new ImageValidator($allowedMimeTypes, $imageMaxFileSize);
-        $this->commandQueryFactory = $commandQueryFactory;
     }
 
     public function __destruct()

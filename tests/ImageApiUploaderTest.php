@@ -38,14 +38,14 @@ class ImageApiUploaderTest extends AbstractTestCase
         $commandQueryFactory = new CommandQueryFactory(
             $this->requestFactory,
             $this->streamFactory,
-            new ApiProvider('http://api', 'api-key', 'namespace')
+            new ApiProvider('http://api', 'api-key', 'namespace'),
         );
 
         $this->imageApiUploader = new ImageApiUploader(
             ['JPG' => 'image/jpeg'],
             2 * 1024 * 1024,
             self::MAX_IMAGE_SIZE,
-            $commandQueryFactory
+            $commandQueryFactory,
         );
     }
 
@@ -113,7 +113,7 @@ class ImageApiUploaderTest extends AbstractTestCase
         $this->assertSame('POST', $uploadWithoutResizingCommand->getHttpMethod());
         $this->assertSame(
             'http://api/image/?apikey=api-key&namespace=namespace',
-            $uploadWithoutResizingCommand->getUri()
+            $uploadWithoutResizingCommand->getUri(),
         );
         $this->assertUploadImageStream($image, $uploadWithoutResizingCommand->createBody());
     }
@@ -141,7 +141,7 @@ class ImageApiUploaderTest extends AbstractTestCase
         $this->assertSame('DELETE', $deleteCommand->getHttpMethod());
         $this->assertSame(
             sprintf('http://api/image/%s?apikey=api-key&namespace=namespace', $imageHash),
-            $deleteCommand->getUri()
+            $deleteCommand->getUri(),
         );
     }
 
@@ -164,7 +164,7 @@ class ImageApiUploaderTest extends AbstractTestCase
         $this->assertSame('GET', $getImageQuery->getHttpMethod());
         $this->assertSame(
             sprintf('http://api/image/%s?apikey=api-key&namespace=namespace', $imageHash),
-            $getImageQuery->getUri()
+            $getImageQuery->getUri(),
         );
         $this->assertEquals(CacheTime::noCache(), $getImageQuery->getCacheTime());
     }

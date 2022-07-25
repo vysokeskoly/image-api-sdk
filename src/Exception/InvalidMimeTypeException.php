@@ -10,8 +10,8 @@ class InvalidMimeTypeException extends ImageException
             sprintf(
                 'Image of type "%s" given and it was expected one of ["%s"].',
                 $givenMimeType,
-                implode('", "', $availableMimeTypes)
-            )
+                implode('", "', $availableMimeTypes),
+            ),
         );
     }
 }

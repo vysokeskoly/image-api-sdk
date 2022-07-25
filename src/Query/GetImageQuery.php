@@ -10,14 +10,9 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageHash;
 
 class GetImageQuery extends AbstractHttpGetQuery
 {
-    private Api $api;
-    private ImageHash $imageHash;
-
-    public function __construct(RequestFactoryInterface $requestFactory, Api $api, ImageHash $imageHash)
+    public function __construct(RequestFactoryInterface $requestFactory, private Api $api, private ImageHash $imageHash)
     {
         parent::__construct($requestFactory);
-        $this->api = $api;
-        $this->imageHash = $imageHash;
     }
 
     public function getUri(): string

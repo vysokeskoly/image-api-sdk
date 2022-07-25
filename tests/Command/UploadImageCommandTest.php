@@ -31,7 +31,7 @@ class UploadImageCommandTest extends AbstractTestCase
         $this->commandSender = new CommandSender(
             null,
             [new UploadCommandHandler()],
-            [new SavedImageDecoder($imageUrl)]
+            [new SavedImageDecoder($imageUrl)],
         );
     }
 
@@ -44,7 +44,7 @@ class UploadImageCommandTest extends AbstractTestCase
             $this->requestFactory,
             $this->streamFactory,
             new Api('http://api/', 'key', null),
-            $image
+            $image,
         );
 
         $request = $command->createRequest();
@@ -65,7 +65,7 @@ class UploadImageCommandTest extends AbstractTestCase
             $this->requestFactory,
             $this->streamFactory,
             new Api('http://api/', 'key', null),
-            $image
+            $image,
         );
 
         $savedImages = $this->commandSender->sendAndReturn($command);
@@ -90,7 +90,7 @@ class UploadImageCommandTest extends AbstractTestCase
             $this->requestFactory,
             $this->streamFactory,
             new Api('http://api/', 'key', null),
-            $image
+            $image,
         );
 
         $savedImages = $this->commandSender->sendAndReturn($command);

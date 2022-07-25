@@ -12,8 +12,8 @@ class TooSmallImageException extends ImageException
             sprintf(
                 'Given image is too small. Image should be bigger than %d x %d px.',
                 $minSize->getWidth(),
-                $minSize->getHeight()
-            )
+                $minSize->getHeight(),
+            ),
         );
     }
 }

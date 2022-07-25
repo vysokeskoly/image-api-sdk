@@ -14,14 +14,11 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\SavedImage;
  */
 class SavedImageDecoder implements ImpureResponseDecoderInterface
 {
-    private string $imageBaseUrl;
-
-    public function __construct(string $imageBaseUrl)
+    public function __construct(private string $imageBaseUrl)
     {
-        $this->imageBaseUrl = $imageBaseUrl;
     }
 
-    public function supports($response, $initiator): bool
+    public function supports(mixed $response, mixed $initiator): bool
     {
         return $initiator instanceof UploadImageCommand
             && is_array($response)
@@ -31,7 +28,7 @@ class SavedImageDecoder implements ImpureResponseDecoderInterface
     }
 
     /** @phpstan-return DecodedValueInterface<array<SavedImage>> */
-    public function decode($response): DecodedValueInterface
+    public function decode(mixed $response): mixed
     {
         $decoded = array_map(
             function ($hash) {
@@ -46,7 +43,7 @@ class SavedImageDecoder implements ImpureResponseDecoderInterface
 
                 return SavedImage::createFromHash($this->imageBaseUrl, $imageHash);
             },
-            $response['messages'] ?? []
+            $response['messages'] ?? [],
         );
 
         return new DecodedValue($decoded);

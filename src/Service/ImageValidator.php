@@ -11,13 +11,8 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
 /** @internal */
 class ImageValidator
 {
-    private array $allowedMimeTypes;
-    private int $maxImageFileSize;
-
-    public function __construct(array $allowedMimeTypes, int $maxImageFileSize)
+    public function __construct(private array $allowedMimeTypes, private int $maxImageFileSize)
     {
-        $this->allowedMimeTypes = $allowedMimeTypes;
-        $this->maxImageFileSize = $maxImageFileSize;
     }
 
     public function assertValidImage(ImageInterface $image, ImageSize $minSize): void

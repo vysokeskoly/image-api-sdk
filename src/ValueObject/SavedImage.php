@@ -5,8 +5,6 @@ namespace VysokeSkoly\ImageApi\Sdk\ValueObject;
 class SavedImage implements \JsonSerializable
 {
     private string $baseUrl;
-    private ImageHash $hash;
-    private ImageSize $size;
 
     public static function createFromImage(string $baseUrl, ImageInterface $image): self
     {
@@ -18,11 +16,9 @@ class SavedImage implements \JsonSerializable
         return new self($baseUrl, $hash, ImageSize::empty());
     }
 
-    public function __construct(string $baseUrl, ImageHash $hash, ImageSize $size)
+    public function __construct(string $baseUrl, private ImageHash $hash, private ImageSize $size)
     {
         $this->baseUrl = rtrim($baseUrl, '/');
-        $this->hash = $hash;
-        $this->size = $size;
     }
 
     public function getUrl(): string

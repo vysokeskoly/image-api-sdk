@@ -7,26 +7,17 @@ use Psr\Http\Message\StreamInterface;
 
 class Image implements ImageInterface
 {
-    private ImagePath $path;
-    private ImageContent $content;
-    private ImageHash $hash;
-    private \Imagick $imagick;
-
     public static function loadFromPath(ImagePath $path): self
     {
         return (new LazyImage($path))->asImage();
     }
 
     public function __construct(
-        ImagePath $path,
-        ImageContent $content,
-        ImageHash $hash,
-        \Imagick $imagick
+        private ImagePath $path,
+        private ImageContent $content,
+        private ImageHash $hash,
+        private \Imagick $imagick,
     ) {
-        $this->path = $path;
-        $this->content = $content;
-        $this->hash = $hash;
-        $this->imagick = $imagick;
     }
 
     public function getPath(): ImagePath
@@ -74,7 +65,7 @@ class Image implements ImageInterface
             $this->path,
             $content,
             ImageHash::createFromContent($content),
-            $imagick
+            $imagick,
         );
     }
 
