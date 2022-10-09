@@ -2,6 +2,8 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+
+## 3.1.0 - 2022-10-09
 - Add `ImageGenerator` service
 - Add `Crop` Value Object
 - Add `ImageContent::fromImagick` named constructor
