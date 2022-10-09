@@ -30,7 +30,7 @@
         "phpstan/phpstan-beberlei-assert": "^1.0",
         "phpstan/phpstan-mockery": "^1.1",
         "phpstan/phpstan-phpunit": "^1.1",
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^9.5.20",
         "symfony/var-dumper": "^6.0"
     },
     "suggest": {

@@ -19,6 +19,11 @@ class ImageContent implements \Stringable
         }
     }
 
+    public static function fromImagick(\Imagick $imagick): self
+    {
+        return new self($imagick->getImageBlob());
+    }
+
     public function __construct(private string $content)
     {
         Assertion::notEmpty($content);

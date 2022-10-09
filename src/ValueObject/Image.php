@@ -59,7 +59,7 @@ class Image implements ImageInterface
     {
         $imagick = clone $this->imagick;
         $scale($imagick);
-        $content = new ImageContent($imagick->getImageBlob());
+        $content = ImageContent::fromImagick($imagick);
 
         return new self(
             $this->path,
