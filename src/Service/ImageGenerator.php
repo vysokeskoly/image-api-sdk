@@ -2,6 +2,8 @@
 
 namespace VysokeSkoly\ImageApi\Sdk\Service;
 
+use Imagine\Image\ImageInterface;
+use Imagine\Imagick\Imagine;
 use VysokeSkoly\ImageApi\Sdk\Assertion;
 use VysokeSkoly\ImageApi\Sdk\ValueObject\Crop;
 use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageContent;
@@ -9,34 +11,40 @@ use VysokeSkoly\ImageApi\Sdk\ValueObject\ImageSize;
 
 class ImageGenerator
 {
+    private const JPEG_QUALITY = 90;
+    private const PNG_COMPRESSION_LEVEL = 9; // 0 - 9
+    private const PNG_COMPRESSION_FILTER = 7; // 0 - 9
+
     public function generate(ImageContent $content, ImageSize $size, ?Crop $crop): ImageContent
     {
-        $imagick = $this->createImagickFromContent($content);
+        $imageType = $content->parseRealImageType();
+        Assertion::notNull($imageType, 'Could not parse an image type.');
+
+        $imagine = new Imagine();
+        $image = $imagine->load($content->getContent());
 
         if ($crop) {
-            $cropStart = $crop->getStart();
-            $cropSize = $crop->getSize();
-
-            Assertion::true(
-                $imagick->cropImage(
-                    $cropSize->getWidth(),
-                    $cropSize->getHeight(),
-                    $cropStart->getX(),
-                    $cropStart->getY(),
-                ),
+            $image = $image->crop(
+                $crop->getStart(),
+                $crop->getSize()->asBox(),
             );
         }
 
-        Assertion::true($imagick->thumbnailImage($size->getWidth(), $size->getHeight()));
+        /** @var ImageInterface $thumbnail */
+        $thumbnail = $image->thumbnail(
+            $size->asBox(),
+            ImageInterface::THUMBNAIL_OUTBOUND,
+        );
 
-        return ImageContent::fromImagick($imagick);
-    }
+        $thumbnailContent = $thumbnail->get(
+            $imageType,
+            [
+                'jpeg_quality' => self::JPEG_QUALITY,
+                'png_compression_level' => self::PNG_COMPRESSION_LEVEL,
+                'png_compression_filter' => self::PNG_COMPRESSION_FILTER,
+            ],
+        );
 
-    private function createImagickFromContent(ImageContent $content): \Imagick
-    {
-        $imagick = new \Imagick();
-        $imagick->readImageBlob($content->getContent());
-
-        return $imagick;
+        return new ImageContent($thumbnailContent);
     }
 }

@@ -2,6 +2,10 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+- Use `Imagine` to generate images
+- Add `ImageContent::parseRealImageType` method
+- Implement `Imagine PointInterface` in `Point`
+- Add `ImageSize::asBox` method
 
 ## 3.1.0 - 2022-10-09
 - Add `ImageGenerator` service

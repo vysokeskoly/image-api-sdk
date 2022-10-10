@@ -29,4 +29,26 @@ class ImageContentTest extends AbstractTestCase
 
         new ImageContent('');
     }
+
+    /** @dataProvider provideContentType */
+    public function testShouldParseImageType(ImageContent $content, ?string $expected): void
+    {
+        $type = $content->parseRealImageType();
+        $this->assertSame($expected, $type);
+    }
+
+    public function provideContentType(): array
+    {
+        $image = fn (string $name) => ImageContent::loadFromPath(
+            new ImagePath(sprintf(__DIR__ . '/../Fixtures/%s', $name)),
+        );
+
+        return [
+            // content, realExtension
+            'invalid' => [new ImageContent('string'), null],
+            'jpg' => [$image('image.jpg'), 'jpg'],
+            'png' => [$image('image.png'), 'png'],
+            'gif' => [$image('image.gif'), 'gif'],
+        ];
+    }
 }

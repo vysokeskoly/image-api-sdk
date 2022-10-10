@@ -2,6 +2,9 @@
 
 namespace VysokeSkoly\ImageApi\Sdk\ValueObject;
 
+use Imagine\Image\Box;
+use Imagine\Image\BoxInterface;
+
 /** @phpstan-implements \ArrayAccess<int|string, int> */
 class ImageSize implements \ArrayAccess, \JsonSerializable
 {
@@ -72,5 +75,10 @@ class ImageSize implements \ArrayAccess, \JsonSerializable
             'width' => $this->width,
             'height' => $this->height,
         ];
+    }
+
+    public function asBox(): BoxInterface
+    {
+        return new Box($this->width, $this->height);
     }
 }
