@@ -23,6 +23,7 @@ class ImageGeneratorTest extends TestCase
         ImagePath $path,
         ImageSize $size,
         ?Crop $crop,
+        float $allowedDiff = 100.,
     ): void {
         $generated = $this->imageGenerator->generate(ImageContent::loadFromPath($path), $size, $crop);
         $generatedPath = str_replace($path->getFilename(), 'generated-' . $expectedPath->getFilename(), $path->getPath());
@@ -34,8 +35,8 @@ class ImageGeneratorTest extends TestCase
 
         // compare generated image with pre-generated example
         $expected = new \Imagick($expectedPath->getPath());
-        $result = $expected->compareImages($actual, \Imagick::METRIC_MEANSQUAREERROR);
-        $this->assertLessThanOrEqual(10.0, $result[1]);
+        $result = $expected->compareImages($actual, \Imagick::METRIC_ABSOLUTEERRORMETRIC);
+        $this->assertLessThanOrEqual($allowedDiff, $result[1]);
     }
 
     public function provideImageToGenerate(): array
@@ -43,7 +44,7 @@ class ImageGeneratorTest extends TestCase
         $fixture = fn (string $name) => new ImagePath(sprintf(__DIR__ . '/../Fixtures/%s', $name));
 
         return [
-            // expectedPath, imagePath, size, crop
+            // expectedPath, imagePath, size, crop, allowedDiff
             '1:1 - no crop' => [
                 $fixture('500x300.png'),
                 $fixture('500x300.png'),
@@ -53,7 +54,7 @@ class ImageGeneratorTest extends TestCase
             'smaller by crop' => [
                 $fixture('smaller-by-crop.png'),
                 $fixture('500x300.png'),
-                new ImageSize(500, 300),
+                new ImageSize(400, 200),
                 Crop::parse(['x' => 50, 'y' => 50, 'x2' => 450, 'y2' => 250]),
             ],
             '50% - no crop' => [
@@ -61,6 +62,7 @@ class ImageGeneratorTest extends TestCase
                 $fixture('500x300.png'),
                 new ImageSize(250, 150),
                 null,
+                600.,
             ],
             '50x30' => [
                 $fixture('50x30.png'),
@@ -79,6 +81,14 @@ class ImageGeneratorTest extends TestCase
                 $fixture('bigbruce.jpg'),
                 new ImageSize(60, 90),
                 Crop::parse(['x' => 16, 'y' => 5, 'x2' => 185, 'y2' => 240]),
+                5000.,
+            ],
+            'real image - crop and resize' => [
+                $fixture('smaller.jpeg'),
+                $fixture('original.jpeg'),
+                new ImageSize(407, 254),
+                Crop::parse(['x' => 0, 'y' => 0, 'x2' => 1920, 'y2' => 624]),
+                3000.,
             ],
         ];
     }
