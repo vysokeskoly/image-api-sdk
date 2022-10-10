@@ -2,6 +2,8 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+
+## 3.2.0 - 2022-10-10
 - Use `Imagine` to generate images
 - Add `ImageContent::parseRealImageType` method
 - Implement `Imagine PointInterface` in `Point`
