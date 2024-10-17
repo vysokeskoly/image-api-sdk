@@ -51,6 +51,7 @@
     "config": {
         "allow-plugins": {
             "ergebnis/composer-normalize": true,
+            "php-http/discovery": true,
             "phpstan/extension-installer": true
         },
         "sort-packages": true

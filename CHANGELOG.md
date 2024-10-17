@@ -2,6 +2,7 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+- Consider `0x3F` as `jpg` image type
 
 ## 3.2.0 - 2022-10-10
 - Use `Imagine` to generate images
