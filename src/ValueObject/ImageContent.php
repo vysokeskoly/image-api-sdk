@@ -54,7 +54,7 @@ class ImageContent implements \Stringable
         $imageTypeByte = array_shift($bytes);
 
         return match ($imageTypeByte) {
-            0xFF => 'jpg',
+            0xFF, 0x3F => 'jpg',
             0x89 => 'png',
             0x47 => 'gif',
             default => null,
