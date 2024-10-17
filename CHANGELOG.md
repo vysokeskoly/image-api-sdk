@@ -2,6 +2,8 @@
 
 <!-- There is always Unreleased section on the top. Subsections (Added, Changed, Fixed, Removed) should be added as needed. -->
 ## Unreleased
+
+## 3.3.0 - 2024-10-17
 - Consider `0x3F` as `jpg` image type
 
 ## 3.2.0 - 2022-10-10
